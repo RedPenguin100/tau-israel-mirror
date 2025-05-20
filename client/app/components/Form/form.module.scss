@@ -1,0 +1,163 @@
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.sequence_input_tabs {
+  margin: auto;
+}
+
+.sequence_input {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  height: 10rem;
+
+  &.plasmid {
+    grid-template-columns: 8fr 1fr 1fr;
+  }
+
+  &.fasta {
+    grid-template-columns: 1fr 8fr 1fr;
+  }
+
+  &.sequence {
+    grid-template-columns: 1fr 1fr 8fr;
+  }
+}
+
+.container {
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  height: 100%;
+
+  &.disabled {
+    // pointer-events: none;
+    opacity: 0.4;
+    --accent-light: black;
+    --accent-dark: black;
+    font-size: 0.5rem;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.text {
+  border: 2px solid var(--accent-dark);
+  height: 100%;
+  width: 100%;
+  padding: 0.5rem;
+  background-color: transparent;
+  text-transform: uppercase;
+}
+
+.pcn_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.pcn_inputs_container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pcn_inputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pcn_label {
+  font-weight: bold;
+}
+
+.pcn_input {
+  border-radius: var(--border-radius);
+  max-width: 6rem;
+  padding: 0.5rem;
+  background-color: var(--accent-light);
+  border: 1px solid var(--accent-dark);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid var(--accent-dark);
+  color: var(--accent-dark);
+  background-color: transparent;
+  font-weight: bold;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: scale ease-in-out 300ms;
+
+  &:hover {
+    scale: 1.05;
+  }
+}
+
+.run_btn {
+  background-color: var(--accent-dark);
+  color: white;
+
+  &:disabled {
+    background-color: #ccc;
+    &:hover {
+      scale: none;
+    }
+  }
+}
+
+.errors {
+  padding: 1rem;
+  color: var(--error-color);
+}
+
+.download {
+  padding: 0.75rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  color: var(--accent-dark);
+  font-size: 1.2rem;
+}
+
+@media screen and (max-width: 600px) {
+  .sequence_input {
+    &.plasmid,
+    &.fasta,
+    &.sequence {
+      grid-template-columns: 1fr;
+    }
+
+    & > .disabled {
+      display: none;
+    }
+  }
+
+  .pcn_row {
+    gap: 0.5rem;
+  }
+
+  .pcn_inputs_container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pcn_inputs {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+}

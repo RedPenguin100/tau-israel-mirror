@@ -1,0 +1,27 @@
+image: node:18-alpine
+
+cache:
+  paths:
+    - client/node_modules/
+    - client/.next/cache/
+
+pages:
+  before_script:
+    # Install packages
+    - cd client
+    - npm ci
+  script:
+    # Build application and move content to public folder
+    - npm run build
+    - cd ..
+    - mkdir public
+    # move the produced out directory into public
+    - mv client/out/* public
+  after_script:
+    # Cleanup
+    - rm -rf client/out
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

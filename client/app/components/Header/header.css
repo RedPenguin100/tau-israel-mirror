@@ -1,0 +1,117 @@
+header {
+  color: white;
+  background-color: var(--accent);
+  width: 100%;
+  display: grid;
+  justify-content: center;
+}
+.hero {
+  width: 100vw;
+  max-width: var(--max-width);
+  padding: 2rem 3rem;
+  position: relative;
+}
+
+.hero:after {
+  content: "";
+  --bacteria-width: clamp(150px, 20vw, 300px);
+  --bacteria-height: calc(0.85 * var(--bacteria-width));
+  --bacteria-bottom: calc(-0.4 * var(--bacteria-height));
+  background-image: url(https://static.igem.wiki/teams/4648/wiki/software/new-bacteria-illustration.svg);
+  background-repeat: no-repeat;
+  background-size: var(--bacteria-width);
+  width: var(--bacteria-width);
+  height: var(--bacteria-height);
+  position: absolute;
+  bottom: var(--bacteria-bottom);
+  right: 3rem;
+  animation: floating 2s ease-in-out;
+}
+
+.logo {
+  height: 100px;
+  aspect-ratio: auto;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+nav > ul {
+  display: flex;
+  gap: 0.5rem;
+}
+nav > ul > li {
+  list-style: none;
+  display: inline;
+  font-size: 1.2rem;
+}
+nav > ul > li > a {
+  border-radius: var(--border-radius);
+  color: white;
+  padding: 0.4em 0.7em;
+  border-radius: var(--border-radius);
+  text-decoration: underline;
+}
+.hero h1 {
+  margin: 1rem 0;
+  font-size: 2.7rem;
+  transition: color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+p {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  text-wrap: balance;
+}
+nav > ul > li > a:is(:hover, :focus-within) {
+  background-position: 0;
+  background-color: white;
+  color: var(--accent);
+  text-decoration: none;
+}
+nav > ul > li > a:is(:hover, :focus-within) h2 {
+  color: rgb(var(--accent-light));
+}
+
+@keyframes floating {
+  0% {
+    bottom: calc(var(--bacteria-height) + 0.3 * var(--bacteria-bottom));
+  }
+  50% {
+    bottom: calc(var(--bacteria-bottom) - 0.3 * var(--bacteria-height));
+  }
+  100% {
+    bottom: var(--bacteria-bottom);
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .hero:after {
+    --bacteria-bottom: calc(-0.7 * var(--bacteria-height));
+    right: 0rem;
+  }
+}
+
+@media screen and (max-width: 800px) {
+  .hero:after {
+    --bacteria-bottom: calc(-0.5 * var(--bacteria-height));
+    right: 1rem;
+  }
+  .logo {
+    height: 60px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .hero {
+    padding: 1rem 1rem 2rem 1rem;
+  }
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .hero:after {
+    --bacteria-bottom: calc(-0.6 * var(--bacteria-height));
+    right: -1rem;
+  }
+}
