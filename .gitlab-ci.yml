@@ -1,27 +1,33 @@
-image: node:18-alpine
 
-cache:
-  paths:
-    - client/node_modules/
-    - client/.next/cache/
+image: python:3.11
 
-pages:
-  before_script:
-    # Install packages
-    - cd client
-    - npm ci
+services:
+  - docker:dind
+
+variables:
+  NODE_ENV: development
+
+stages:
+  - install
+  - run
+
+install_dependencies:
+  stage: install
   script:
-    # Build application and move content to public folder
-    - npm run build
-    - cd ..
-    - mkdir public
-    # move the produced out directory into public
-    - mv backend/uploads/* public
-  after_script:
-    # Cleanup
-    - rm -rf backend/uploads/
-  artifacts:
-    paths:
-      - public
-  only:
-    - main
+    - apt update && apt install -y curl
+    - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    - apt install -y nodejs
+    - node -v && npm -v
+    - cd client && npm ci
+    - cd ../backend && pip install -r requirements.txt
+
+run_servers:
+  stage: run
+  script:
+    - cd backend
+    - uvicorn main:app --host 0.0.0.0 --port 8000 &
+    - cd ../client
+    - npm run start &
+    - sleep 10  # Give time for servers to start
+    - curl http://localhost:8000  # Test backend
+    - curl http://localhost:3000  # Test frontend
