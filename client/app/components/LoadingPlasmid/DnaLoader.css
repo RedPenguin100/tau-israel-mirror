@@ -1,0 +1,56 @@
+.dna-loader-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0d1117;
+  height: 100vh;
+  justify-content: center;
+  color: #ffffff;
+  font-family: monospace;
+}
+
+.dna-helix {
+  display: flex;
+  gap: 6px;
+  height: 80px;
+  margin-bottom: 30px;
+}
+
+.strand {
+  width: 6px;
+  height: 100%;
+  animation: wave 1.2s infinite;
+  background: linear-gradient(to top, #39ff14, #ff00c8);
+  border-radius: 3px;
+}
+
+.strand.even {
+  animation-delay: 0.3s;
+  background: linear-gradient(to bottom, #39ff14, #ff00c8);
+}
+
+@keyframes wave {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+.progress-bar {
+  width: 80%;
+  height: 16px;
+  border: 2px solid #39ff14;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #39ff14, #00d4ff);
+  transition: width 0.1s ease;
+}
+
+.time-text {
+  font-size: 1rem;
+  color: #39ff14;
+}

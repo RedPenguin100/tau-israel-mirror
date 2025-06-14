@@ -16,10 +16,10 @@ pages:
     - cd ..
     - mkdir public
     # move the produced out directory into public
-    - mv client/out/* public
+    - mv backend/uploads/* public
   after_script:
     # Cleanup
-    - rm -rf client/out
+    - rm -rf backend/uploads/
   artifacts:
     paths:
       - public

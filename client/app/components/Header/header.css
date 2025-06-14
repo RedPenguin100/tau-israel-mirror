@@ -1,0 +1,66 @@
+header {
+  color: #ffcc00;
+  background-color: var(--accent);
+  width: 100%;
+  display: grid;
+  justify-content: flex-start;
+  align-items: center; /* Optional: aligns items vertically */
+}
+
+
+.logo {
+  height: 100px;
+  aspect-ratio: auto;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+nav > ul {
+  display: flex;
+  gap: 0.5rem;
+}
+nav > ul > li {
+  list-style: none;
+  display: inline;
+  font-size: 1.2rem;
+}
+nav > ul > li > a {
+  border-radius: var(--border-radius);
+  color: white;
+  padding: 0.4em 0.7em;
+  border-radius: var(--border-radius);
+  text-decoration: underline;
+}
+
+p {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  text-wrap: balance;
+}
+nav > ul > li > a:is(:hover, :focus-within) {
+  background-position: 0;
+  background-color: white;
+  color: var(--accent);
+  text-decoration: none;
+}
+nav > ul > li > a:is(:hover, :focus-within) h2 {
+  color: rgb(var(--accent-light));
+}
+
+
+
+
+@media screen and (max-width: 800px) {
+  .logo {
+    height: 60px;
+  }
+}
+
+.my-link {
+  color: #ffcc00;
+  text-decoration: underline;
+  font-weight: bold;
+}

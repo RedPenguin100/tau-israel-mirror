@@ -1,0 +1,48 @@
+.container {
+  --plasmid-map-container-height: 75vh;
+  display: grid;
+  grid-template-areas: "linear circle";
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  max-width: var(--max-width);
+  width: 100%;
+  height: var(--plasmid-map-container-height);
+}
+
+.plasmid-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: auto; /* if the viewer might overflow */
+  box-sizing: border-box;
+}
+
+.circle {
+  display: none;
+}
+
+.linear {
+  grid-area: linear;
+  height: var(--plasmid-map-container-height);
+  overflow-y: scroll;
+}
+
+@media screen and (max-width: 600px) {
+  .container {
+    --plasmid-map-container-height: 95vh;
+    grid-template-areas:
+      "circle"
+      "linear";
+    grid-template-columns: auto;
+  }
+  .circle {
+    height: calc(0.5 * var(--plasmid-map-container-height));
+  }
+
+  .linear {
+    height: calc(0.5 * var(--plasmid-map-container-height));
+  }
+}
