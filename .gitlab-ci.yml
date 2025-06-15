@@ -7,6 +7,6 @@ frontend_job:
   script:
     - cd client
     - npm ci
-    - npm run build  # or start if dev
-
+    - npm run build  
+    - npm run start
 
