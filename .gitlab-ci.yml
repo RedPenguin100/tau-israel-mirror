@@ -1,6 +1,5 @@
 stages:
   - frontend
-  - backend
 
 frontend_job:
   image: node:18
@@ -10,10 +9,4 @@ frontend_job:
     - npm ci
     - npm run build  # or start if dev
 
-backend_job:
-  image: python:3.11
-  stage: backend
-  script:
-    - cd backend
-    - pip install -r requirements.txt
-    - uvicorn main:app --host 0.0.0.0 --port 8000
+
