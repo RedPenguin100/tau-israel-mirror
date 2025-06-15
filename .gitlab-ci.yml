@@ -8,5 +8,5 @@ frontend_job:
     - cd client
     - npm ci
     - npm run build  
-    - npm run start
+    - npx serve out
 
