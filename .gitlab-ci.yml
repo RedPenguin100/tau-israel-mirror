@@ -1,24 +1,19 @@
-image: node:18
-
 stages:
-  - install
-  - run
+  - frontend
+  - backend
 
-install_dependencies:
-  stage: install
+frontend_job:
+  image: node:18
+  stage: frontend
   script:
     - cd client
     - npm ci
-    - cd ../backend
-    - pip install -r requirements.txt
+    - npm run build  # or start if dev
 
-run_servers:
-  stage: run
+backend_job:
+  image: python:3.11
+  stage: backend
   script:
     - cd backend
-    - uvicorn main:app --host 0.0.0.0 --port 8000 &
-    - cd ../client
-    - npm run start
-    - sleep 10
-    - curl http://localhost:8000
-    - curl http://localhost:3000
+    - pip install -r requirements.txt
+    - uvicorn main:app --host 0.0.0.0 --port 8000
