@@ -9,7 +9,7 @@ pages:
   before_script:
     # Install packages
     - cd client
-    - npm ci
+    - npm install
   script:
     # Build application and move content to public folder
     - npm run build
