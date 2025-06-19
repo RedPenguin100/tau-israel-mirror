@@ -1,12 +1,28 @@
-stages:
-  - frontend
+image: node:18-alpine
 
-frontend_job:
-  image: node:18
-  stage: frontend
-  script:
+cache:
+  paths:
+    - client/node_modules/
+    - client/.next/cache/
+
+pages:
+  before_script:
+    # Install packages
     - cd client
     - npm ci
-    - npm run build  
-    - npx serve out
+  script:
+    # Build application and move content to public folder
+    - npm run build
+    - cd ..
+    - mkdir public
+    # move the produced out directory into public
+    - mv client/out/* public
+  after_script:
+    # Cleanup
+    - rm -rf client/out
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
 
