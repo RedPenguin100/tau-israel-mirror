@@ -1,1 +1,1 @@
-export const BACKEND_URL = "https://pcn-gradient-backend.onrender.com/generate";
+export const BACKEND_URL = "https://backend-igem.onrender.com";
