@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import FileUploader from "../FileUploader";
+import { BACKEND_URL } from "../../constants";
+
 
 const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
 
@@ -54,7 +56,7 @@ function FastaUploader({
         offset += CHUNK_SIZE;
         const isLastChunk = offset >= file.size;
 
-        await uploadChunk(chunk, filename, isLastChunk, "http://localhost:8000/upload_gene_fa");
+        await uploadChunk(chunk, filename, isLastChunk, `${BACKEND_URL}/upload_gene_fa`);
       }
       setName(filename); 
       onUpload();
@@ -73,7 +75,7 @@ function FastaUploader({
         offset += CHUNK_SIZE;
         const isLastChunk = offset >= file.size;
 
-        await uploadChunk(chunk, filename, isLastChunk, "http://localhost:8000/upload_gene_gb");
+        await uploadChunk(chunk, filename, isLastChunk, `${BACKEND_URL}/upload_gene_gb`);
       }
       setName(filename); 
       onUpload();

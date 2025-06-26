@@ -35,7 +35,7 @@ UPLOAD_FOLDER.mkdir(exist_ok=True)
 import os
 import time
 
-def remove_expired_fasta_files(folder_path=UPLOAD_FOLDER, max_age_ms=100):
+def remove_expired_fasta_files(folder_path=UPLOAD_FOLDER, max_age_ms=18640):
     """
     Remove .fasta files with names in format: {file.name}_{timestamp}.fasta
     if the timestamp is older than max_age_ms (milliseconds).

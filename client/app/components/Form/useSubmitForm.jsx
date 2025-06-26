@@ -1,19 +1,20 @@
 import { useCallback } from "react";
 import { setIsLoading } from "../../store";
-import { BACKEND_URL } from "../../constants"; // ✅ using dynamic backend URL
+import { BACKEND_URL } from "../../constants";
 import { getFastaFormat } from "../../utils";
 
+
 export const useSubmitForm = (
-  geneInputType,
-  organismFile,
-  geneFile,
-  geneSequence,
-  numericParams,
-  viewASO,
-  setDownloadFile,
-  isFormValid,
-  setErrors,
-  setAsoSequences
+    geneInputType,
+    organismFile,
+    geneFile,
+    geneSequence,
+    numericParams,
+    viewASO,
+    setDownloadFile,
+    isFormValid,
+    setErrors,
+    setAsoSequences
 ) => {
   return useCallback(
     async (event) => {
@@ -28,7 +29,6 @@ export const useSubmitForm = (
       }
 
       try {
-        // ✅ EDIT: Use dynamic backend URL instead of localhost
         const response = await fetch(`${BACKEND_URL}/gen_aso`, {
           method: "POST",
           headers: {
@@ -58,8 +58,7 @@ export const useSubmitForm = (
           setIsLoading(false);
           return;
         }
-
-        setAsoSequences(data.asoSequence || []);
+        setAsoSequences(data.asoSequence || [])
         const asoFasta = getFastaFormat(data.asoSequence);
         const file = new Blob([asoFasta], { type: "text/plain" });
         setDownloadFile(file);
@@ -71,16 +70,15 @@ export const useSubmitForm = (
       }
     },
     [
-      geneInputType,
-      organismFile,
-      geneFile,
-      geneSequence,
-      numericParams,
-      viewASO,
-      setDownloadFile,
-      isFormValid,
-      setErrors,
-      setAsoSequences,
+    geneInputType,
+    organismFile,
+    geneFile,
+    geneSequence,
+    numericParams,
+    viewASO,
+    setDownloadFile,
+    isFormValid,
+    setErrors
     ]
   );
 };
