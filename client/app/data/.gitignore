@@ -1,0 +1,19 @@
+# Ignore genome folders and their contents
+*_genome/
+*_genome/*
+
+# Ignore compressed genome files
+*.fa.gz
+*.fasta.gz
+*.fna.gz
+*.ffn.gz
+*.faa.gz
+*.frn.gz
+
+# Ignore large genome files
+*.fa
+*.fasta
+*.fna
+*.ffn
+*.faa
+*.frn

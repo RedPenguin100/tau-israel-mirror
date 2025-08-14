@@ -43,6 +43,11 @@ function Form({setAsoSequences}) {
   const [isValid, setIsValid] = useState(true);
   const [downloadFile, setDownloadFile] = useState();
   
+  // New state for user info
+  const [userInfo, setUserInfo] = useState({ name: "", email: "" });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
+  
   const $isLoading = useStore(isLoading);
 
   const isFormValid = useCallback(() => {
@@ -72,9 +77,27 @@ function Form({setAsoSequences}) {
     return true;
   }, [organismFile, geneSequence, numericParams]);
 
+  const isUserInfoValid = useCallback(() => {
+    if (!userInfo.name.trim()) return setErrors(["Please provide your name"]), false;
+    if (!userInfo.email.trim()) return setErrors(["Please provide your email address"]), false;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userInfo.email)) {
+      setErrors(["Please enter a valid email address"]);
+      return false;
+    }
+
+    setErrors([]);
+    return true;
+  }, [userInfo]);
+
   useEffect(() => {
-    setIsValid(isFormValid());
-  }, [organismFile, geneSequence, numericParams, isFormValid]);
+    if (step <= 3) {
+      setIsValid(isFormValid());
+    } else {
+      setIsValid(isUserInfoValid());
+    }
+  }, [organismFile, geneSequence, numericParams, isFormValid, step, userInfo, isUserInfoValid]);
 
   const handleNumericParamChange = (paramName, value) => {
     setNumericParams((prev) => ({ ...prev, [paramName]: Number(value) }));
@@ -93,8 +116,64 @@ function Form({setAsoSequences}) {
     setAsoSequences
   );
 
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (step === 4 && isUserInfoValid()) {
+      // Start processing and send emails
+      setIsProcessing(true);
+      
+      try {
+        // Send "processing started" email
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userInfo.email,
+            name: userInfo.name,
+            type: 'processing_started'
+          }),
+        });
+
+        // Simulate processing time (in real app, this would be actual processing)
+        setTimeout(async () => {
+          // Send "processing completed" email
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: userInfo.email,
+              name: userInfo.name,
+              type: 'processing_completed',
+              asoData: {
+                geneInputType,
+                organismFile,
+                geneFile,
+                geneSequence,
+                numericParams,
+                viewASO
+              }
+            }),
+          });
+          
+          setIsProcessing(false);
+          setShowThankYou(true);
+          // You could also call the actual ASO processing function here
+        }, 5000);
+        
+      } catch (error) {
+        console.error('Error sending emails:', error);
+        setIsProcessing(false);
+      }
+    }
+  };
+
   return (
-    <form onSubmit={submitForm} className={styles.form}>
+    <form onSubmit={handleFormSubmit} className={styles.form}>
       {step === 1 && (
         <>
 
@@ -188,6 +267,54 @@ function Form({setAsoSequences}) {
         </>
       )}
 
+      {step === 4 && !showThankYou && (
+        <>
+          <h2>Contact Information</h2>
+          <p>We'll send you an email when your ASO analysis is complete.</p>
+          <section className={styles.user_info}>
+            <div className={styles.formGroup}>
+              <label htmlFor="name">Full Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={userInfo.name}
+                onChange={(e) => setUserInfo(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter your full name"
+                className={styles.userInput}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="email">Email Address *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={userInfo.email}
+                onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="Enter your email address"
+                className={styles.userInput}
+              />
+            </div>
+          </section>
+        </>
+      )}
+
+      {showThankYou && (
+        <>
+          <h2>Thank You!</h2>
+          <div className={styles.thankYouMessage}>
+            <div className={styles.successIcon}>
+              <i className="fa-solid fa-check-circle fa-3x"></i>
+            </div>
+            <p>Thank you for your input, {userInfo.name}!</p>
+            <p>Please make sure you received a confirmation email at <strong>{userInfo.email}</strong>.</p>
+            <p>We'll send you another email with your ASO results once the analysis is complete.</p>
+          </div>
+        </>
+      )}
+
       {errors.length > 0 && (
         <ul className={styles.errors}>
           {errors.map((error, idx) => (
@@ -197,15 +324,6 @@ function Form({setAsoSequences}) {
       )}
 
       <div className={styles.buttons}>
-        {step > 1 && (
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => setStep((s) => s - 1)}
-          >
-            Back
-          </button>
-        )}
         {step < 3 && (
           <button
             type="button"
@@ -215,14 +333,54 @@ function Form({setAsoSequences}) {
             Next
           </button>
         )}
+        {step > 1 && !isProcessing && (
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={() => setStep((s) => s - 1)}
+          >
+            Back
+          </button>
+        )}
         {step === 3 && (
           <button
+            type="button"
             className={`${styles.btn} ${styles.run_btn}`}
             disabled={!isValid || $isLoading}
-            type="submit"
+            onClick={() => setStep(4)}
           >
             <span>Get Optimized ASO</span>
             <i className="fa-solid fa-arrow-right fa-lg" />
+          </button>
+        )}
+        {step === 4 && !showThankYou && (
+          <button
+            className={`${styles.btn} ${styles.run_btn}`}
+            disabled={!isValid || isProcessing}
+            type="submit"
+          >
+            {isProcessing ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <span>Start Processing</span>
+                <i className="fa-solid fa-paper-plane fa-lg" />
+              </>
+            )}
+          </button>
+        )}
+
+        {showThankYou && (
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={() => window.location.href = "/"}
+          >
+            <i className="fa-solid fa-home fa-lg" />
+            <span>Back to Home</span>
           </button>
         )}
         {downloadFile && (

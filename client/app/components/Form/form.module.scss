@@ -180,3 +180,88 @@
     gap: 0.3rem;
   }
 }
+
+// New styles for user info section
+.numeric_params {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.user_info {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: var(--accent-dark);
+  font-size: 1rem;
+}
+
+.formGroup input {
+  padding: 0.75rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.userInput {
+  padding: 0.75rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: normal;
+  transition: all 0.3s ease;
+  
+  &::placeholder {
+    font-weight: normal;
+    color: #999;
+    text-transform: none;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.thankYouMessage {
+  text-align: center;
+  padding: 2rem;
+}
+
+.successIcon {
+  margin-bottom: 1.5rem;
+  
+  i {
+    color: #27ae60;
+  }
+}
+
+.thankYouMessage p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--accent-dark);
+}
+
+.thankYouMessage strong {
+  color: var(--accent-light);
+}

@@ -1,0 +1,4 @@
+
+# large data
+client/app/data/
+*.gtf.gz
