@@ -1,66 +1,151 @@
 header {
-  color: #ffcc00;
-  background-color: var(--accent);
-  width: 100%;
-  display: grid;
-  justify-content: flex-start;
-  align-items: center; /* Optional: aligns items vertically */
+    width: 100%;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 1rem;
+    min-height: 300px;
+    background-color: #68A8CD;
+    color: white;
 }
 
 
 .logo {
-  height: 100px;
-  aspect-ratio: auto;
+    height: 100px;
+    aspect-ratio: auto;
+    margin-top: -3rem;
+    margin-left: -3rem;
 }
 .top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 1rem;
+    margin-top: -1rem;
 }
+
+.top nav {
+    margin-right: -1rem;
+    margin-top: -1.5rem;
+}
+
 nav > ul {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
 }
 nav > ul > li {
-  list-style: none;
-  display: inline;
-  font-size: 1.2rem;
+    list-style: none;
+    display: inline;
+    font-size: 1.2rem;
 }
 nav > ul > li > a {
-  border-radius: var(--border-radius);
-  color: white;
-  padding: 0.4em 0.7em;
-  border-radius: var(--border-radius);
-  text-decoration: underline;
+    border-radius: var(--border-radius);
+    color: #122848;
+    padding: 0.4em 0.7em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.title {
+    position: relative;
+    z-index: 2;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+    text-align: center;
+    margin-top: -3rem;
 }
 
 p {
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-  text-wrap: balance;
+    margin-top: -2rem;
+    margin-bottom: 0;
+    text-wrap: pretty;
+    position: relative;
+    z-index: 2;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.5;
+    max-width: 800px;
+    text-align: center;
 }
 nav > ul > li > a:is(:hover, :focus-within) {
-  background-position: 0;
-  background-color: white;
-  color: var(--accent);
-  text-decoration: none;
+    background-position: 0;
+    background-color: white;
+    color: var(--accent);
+    text-decoration: none;
 }
 nav > ul > li > a:is(:hover, :focus-within) h2 {
-  color: rgb(var(--accent-light));
+    color: rgb(var(--accent-light));
 }
-
 
 
 
 @media screen and (max-width: 800px) {
-  .logo {
+    .logo {
     height: 60px;
-  }
+    }
 }
 
 .my-link {
-  color: #ffcc00;
-  text-decoration: underline;
-  font-weight: bold;
+    color: white;
+    font-weight: bold;
+}
+
+/* Wave layers - Updated to cover full header */
+#shape {
+    position: absolute;
+    left: 0;
+    bottom: -2vw;
+}
+
+.waves {
+    position: absolute;
+    left: 0;
+}
+
+header img.waves:nth-child(1) {
+    opacity: 0.4;
+    bottom: -0.1vw;
+    animation: move-1 5s infinite;
+}
+@keyframes move-1 {
+    50% {
+        transform: translateY(15px);
+    }
+}
+header img.waves:nth-child(2) {
+    opacity: 0.3;
+    bottom: 0.5vw;
+    animation: move-2 4s infinite;
+}
+@keyframes move-2 {
+    50% {
+        transform: translateY(35px);
+    }
+}
+header img.waves:nth-child(3) {
+    bottom: 0.3vw;
+    opacity: 0.2;
+    animation: move-3 3.5s infinite;
+}
+@keyframes move-3 {
+    50% {
+        transform: translateY(25px);
+    }
+}
+
+header img.waves:nth-child(4) {
+    bottom: 0.1vw;
+    opacity: 0.3;
+    animation: move-4 3s infinite;
+}
+@keyframes move-4 {
+    50% {
+        transform: translateY(20px);
+    }
 }

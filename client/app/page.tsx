@@ -17,8 +17,8 @@ export default function Home() {
   return (
     <>
       <Header
-        title="ASO Generator for Targeted Gene Knockdown"
-        subtitle="Input a gene and organism to get a high-efficiency antisense oligo, instantly."
+        title="TA(U)SO: Smart ASO Design"
+        subtitle="Efficiently design antisense oligonucleotides for precise gene knockdown in your organism of choice."
       />
       <div className={styles.main_wrapper}>
         <main className={styles.main}>
