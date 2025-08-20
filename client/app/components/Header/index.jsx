@@ -4,9 +4,15 @@ import "./header.css";
 function Header({ title, subtitle }) {
   return (
     <header>
+        {/* Wave layers, May addition */}
+        <img src="https://static.igem.wiki/teams/5661/waves/wave-1.svg" alt="" className="waves"/>
+        <img src="https://static.igem.wiki/teams/5661/waves/wave-2.svg" alt="" className="waves"/>
+        <img src="https://static.igem.wiki/teams/5661/waves/wave-3.svg" alt="" className="waves"/>
+        <img src="https://static.igem.wiki/teams/5661/waves/wave-4.svg" alt="" className="waves"/>
+        <img src="https://static.igem.wiki/teams/5661/waves/wave-5.svg" alt="" id="shape" />
         <section className="top">
-          <img
-            src={`${process.env.ASSET_PREFIX || ""}/our_logo.png`}
+            <img
+                src={`${process.env.ASSET_PREFIX || ""}/our_logo.png`}
             className="logo"
           />
           <nav>
