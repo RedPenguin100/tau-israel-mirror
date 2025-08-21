@@ -13,7 +13,6 @@ pages:
   script:
     # Build application and move content to public folder
     - npm run build
-    - npm run export 
     - cd ..
     - mkdir public
     # move the produced out directory into public
