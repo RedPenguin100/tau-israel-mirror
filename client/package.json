@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nanostores/react": "^0.7.1",
+    "@react-email/render": "^1.2.0",
     "@types/node": "20.5.9",
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
@@ -17,10 +18,15 @@
     "nanostores": "^0.9.3",
     "next": "13.4.19",
     "node-fetch": "^2.6.7",
+    "nodemailer": "^7.0.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "resend": "^6.0.1",
     "sass": "^1.66.1",
     "seqviz": "^3.9.1",
     "typescript": "5.2.2"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.0"
   }
 }
