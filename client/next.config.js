@@ -7,6 +7,7 @@ const nextConfig = {
     unoptimized: true,
   },
   assetPrefix: process.env.ASSET_PREFIX || "",
+  output: "export", 
 };
 
 module.exports = nextConfig;
