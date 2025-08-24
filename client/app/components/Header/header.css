@@ -6,7 +6,7 @@ header {
     position: relative;
     overflow: hidden;
     padding: 3rem 1rem;
-    min-height: 300px;
+    min-height: 350px;
     background-color: #68A8CD;
     color: white;
 }
@@ -58,11 +58,11 @@ nav > ul > li > a {
     line-height: 1.2;
     margin-bottom: 0.5em;
     text-align: center;
-    margin-top: -3rem;
+    margin-top: -4rem;
 }
 
 p {
-    margin-top: -2rem;
+    margin-top: -3rem;
     margin-bottom: 0;
     text-wrap: pretty;
     position: relative;

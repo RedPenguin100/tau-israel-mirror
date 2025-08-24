@@ -1,6 +1,18 @@
 .form {
   display: grid;
   gap: 1rem;
+
+  h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    color: var(--accent-dark);
+  }
+
+  p {
+    margin: 0 0 1.5rem 0;
+    line-height: 1.6;
+    color: var(--text-color, #333);
+  }
 }
 
 .sequence_input_tabs {
@@ -40,7 +52,7 @@
 }
 .container {
   width: 500px;
-  height: 500x;
+  height: 500px;
   border: 2px solid var(--accent-dark);
   border-radius: var(--border-radius);
   height: 100%;
@@ -106,11 +118,12 @@
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+  margin-top: 4rem;
 }
 
 .btn {
-  position: relative;
-  top: 25px; /* moves it down 20px */
+  //position: relative;
+  //top: 25px; /* moves it down 20px */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -265,3 +278,5 @@
 .thankYouMessage strong {
   color: var(--accent-light);
 }
+
+
