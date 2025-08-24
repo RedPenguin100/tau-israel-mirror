@@ -6,7 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  assetPrefix: process.env.ASSET_PREFIX || ""
+  assetPrefix: process.env.ASSET_PREFIX || "",
+  output: "export", 
 };
 
 module.exports = nextConfig;
