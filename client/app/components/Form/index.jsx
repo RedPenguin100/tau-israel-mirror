@@ -5,6 +5,7 @@ import styles from "./form.module.scss";
 import Tabs from "../Tabs";
 import CheckInput from "../CheckInput";
 import RadioInput from "../RadioInput";
+import { BACKEND_URL, EMAIL_BACKEND_URL } from "../../constants";
 
 import ORGANISM from "../../data/organism";
 import PLASMIDS from "../../data/plasmids";
@@ -125,7 +126,7 @@ function Form({setAsoSequences}) {
       
       try {
         // Send "processing started" email
-        await fetch('/api/send-email', {
+        await fetch(`${EMAIL_BACKEND_URL}/send-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -140,7 +141,7 @@ function Form({setAsoSequences}) {
         // Simulate processing time (in real app, this would be actual processing)
         setTimeout(async () => {
           // Send "processing completed" email
-          await fetch('/api/send-email', {
+          await fetch(`${EMAIL_BACKEND_URL}/send-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
