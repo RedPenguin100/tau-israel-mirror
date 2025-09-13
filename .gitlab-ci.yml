@@ -15,11 +15,7 @@ pages:
     - npm run build
     - cd ..
     - mkdir public
-    # move the produced out directory into public
-    - mv client/out/* public
-  after_script:
-    # Cleanup
-    - rm -rf client/out
+
   artifacts:
     paths:
       - public
