@@ -1,5 +1,7 @@
 fastapi
 uvicorn[standard]
+pydantic
 biopython
+aiosmtplib
+python-dotenv
 python-multipart
-
