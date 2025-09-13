@@ -7,5 +7,5 @@ export const BACKEND_URL = IS_LOCAL
  // production backend
 
 export const EMAIL_BACKEND_URL = IS_LOCAL
-  ? "/api"      // local email backend
+  ? "http://localhost:8000"     // local email backend
   : "https://email-backend.onrender.com"; // production email backend

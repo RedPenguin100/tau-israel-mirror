@@ -5,17 +5,14 @@ import styles from "./form.module.scss";
 import Tabs from "../Tabs";
 import CheckInput from "../CheckInput";
 import RadioInput from "../RadioInput";
-import { BACKEND_URL, EMAIL_BACKEND_URL } from "../../constants";
+import { EMAIL_BACKEND_URL } from "../../constants";
 
 import ORGANISM from "../../data/organism";
-import PLASMIDS from "../../data/plasmids";
 import { isLoading } from "../../store";
 import { useStore } from "@nanostores/react";
 import { useSubmitForm } from "./useSubmitForm";
 
-const INPUT_TYPES_ORGANISM = ["Select Organism", "Upload Organism Fasta"];
 const INPUT_TYPES_GENE = ["Upload Gene Fasta", "Enter Gene Sequence"];
-
 
 function isValidSequenceFile(filename) {
   const extension = filename.split('.').pop()?.toLowerCase();
@@ -25,48 +22,45 @@ function isValidSequenceFile(filename) {
   ].includes(extension ?? '');
 }
 
-
-function Form({setAsoSequences}) {
+function Form({ setAsoSequences }) {
   const [step, setStep] = useState(1);
-
-  const [organismInputType, setOrganismInputType] = useState(INPUT_TYPES_ORGANISM[0]);
-  const [geneInputType, setGeneInputType] = useState(INPUT_TYPES_GENE[0]);
 
   const [selectedOrganism, setSelectedOrganism] = useState(ORGANISM[0].id);
   const [organismFile, setOrganismFile] = useState(ORGANISM[0].file_name || "");
-  const [geneFile, setGeneFile] = useState("none.fa"); // Default to no file
+
+  const [geneInputType, setGeneInputType] = useState(INPUT_TYPES_GENE[0]);
+  const [geneFile, setGeneFile] = useState("none.fa");
   const [geneSequence, setGeneSequence] = useState("ATGCTGACGTAGCTAGCTAGC");
-  // Default gene sequence, can be replaced by user input
 
   const [numericParams, setNumericParams] = useState({ ASO_volume: 50, period_of_treatment: 7 });
   const [viewASO, setViewASO] = useState(true);
   const [errors, setErrors] = useState([]);
   const [isValid, setIsValid] = useState(true);
   const [downloadFile, setDownloadFile] = useState();
-  
-  // New state for user info
+
   const [userInfo, setUserInfo] = useState({ name: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
-  
+
   const $isLoading = useStore(isLoading);
 
   const isFormValid = useCallback(() => {
-    if (!organismFile.length) return setErrors(["Please provide organism sequence"]), false;
+    if (!organismFile.length) return setErrors(["Please select an organism"]), false;
     if (!geneSequence.length) return setErrors(["Please provide gene sequence"]), false;
 
     const validNucleotides = ["A", "C", "T", "G"];
-    if(!isValidSequenceFile(organismFile) ){
-      setErrors(["Invalid organism sequence file format. Please upload a valid file."]);
+    if (!isValidSequenceFile(organismFile)) {
+      setErrors(["Invalid organism sequence file format. Please select a valid file."]);
       return false;
     }
-      for (const char of new Set(geneSequence.toUpperCase())) {
-        if (!validNucleotides.includes(char)) {
-          setErrors(["Sequences must only contain nucleotides: A, C, G, T"]);
-          return false;
-        }
+
+    for (const char of new Set(geneSequence.toUpperCase())) {
+      if (!validNucleotides.includes(char)) {
+        setErrors(["Sequences must only contain nucleotides: A, C, G, T"]);
+        return false;
       }
-    
+    }
+
     for (const [key, val] of Object.entries(numericParams)) {
       if (!(typeof val === "number" && val > 0)) {
         setErrors([`${key} must be a positive number`]);
@@ -81,7 +75,7 @@ function Form({setAsoSequences}) {
   const isUserInfoValid = useCallback(() => {
     if (!userInfo.name.trim()) return setErrors(["Please provide your name"]), false;
     if (!userInfo.email.trim()) return setErrors(["Please provide your email address"]), false;
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userInfo.email)) {
       setErrors(["Please enter a valid email address"]);
@@ -105,90 +99,29 @@ function Form({setAsoSequences}) {
   };
 
   const submitForm = useSubmitForm(
-    geneInputType,
-    organismFile,
-    geneFile,
-    geneSequence,
-    numericParams,
-    viewASO,
-    setDownloadFile,
-    isFormValid,
-    setErrors,
-    setAsoSequences
+  geneInputType,
+  organismFile,
+  geneFile,
+  geneSequence,
+  numericParams,
+  viewASO,
+  setDownloadFile,
+  isFormValid,
+  setErrors,
+  setAsoSequences,
+  userInfo,             // new for emails
+  setShowThankYou,
+  setIsProcessing
   );
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (step === 4 && isUserInfoValid()) {
-      // Start processing and send emails
-      setIsProcessing(true);
-      
-      try {
-        // Send "processing started" email
-        await fetch(`${EMAIL_BACKEND_URL}/send-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: userInfo.email,
-            name: userInfo.name,
-            type: 'processing_started'
-          }),
-        });
-
-        // Simulate processing time (in real app, this would be actual processing)
-        setTimeout(async () => {
-          // Send "processing completed" email
-          await fetch(`${EMAIL_BACKEND_URL}/send-email`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: userInfo.email,
-              name: userInfo.name,
-              type: 'processing_completed',
-              asoData: {
-                geneInputType,
-                organismFile,
-                geneFile,
-                geneSequence,
-                numericParams,
-                viewASO
-              }
-            }),
-          });
-          
-          setIsProcessing(false);
-          setShowThankYou(true);
-          // You could also call the actual ASO processing function here
-        }, 5000);
-        
-      } catch (error) {
-        console.error('Error sending emails:', error);
-        setIsProcessing(false);
-      }
-    }
-  };
 
   return (
-    <form onSubmit={handleFormSubmit} className={styles.form}>
+    <form onSubmit={submitForm} className={styles.form}>
       {step === 1 && (
         <>
-
           <h2>Organism Input</h2> 
-          <Tabs
-            options={INPUT_TYPES_ORGANISM}
-            selectedOption={organismInputType}
-            setSelectedOption={setOrganismInputType}
-          />
           <section className={styles.sequence_input_1}>
-            <div
-              className={`${styles.container} ${organismInputType !== INPUT_TYPES_ORGANISM[0] && styles.disabled}`}
-              onClick={() => setOrganismInputType(INPUT_TYPES_ORGANISM[0])}
-            >
+            <div className={`${styles.container} ${styles.wide}`}>
               <RadioInput
                 name="selected-organism"
                 options={ORGANISM}
@@ -199,12 +132,6 @@ function Form({setAsoSequences}) {
                 }}
                 defaultOption={selectedOrganism}
               />
-            </div>
-            <div
-              className={`${styles.container} ${organismInputType !== INPUT_TYPES_ORGANISM[1] && styles.disabled}`}
-              onClick={() => setOrganismInputType(INPUT_TYPES_ORGANISM[1])}
-            >
-              <FastaUploader setName={setOrganismFile} setSequence={()=>{}} clearFileAfterUpload />
             </div>
           </section>
         </>
@@ -324,7 +251,17 @@ function Form({setAsoSequences}) {
         </ul>
       )}
 
-      <div className={styles.buttons}>
+      <div className={styles.buttons} style={{ display: 'flex', gap: '10px' }}>
+        {step > 1 && !isProcessing && !showThankYou && (
+          <button
+            type="button"
+            className={styles.btn}
+            onClick={() => setStep((s) => s - 1)}
+          >
+            Back
+          </button>
+        )}
+
         {step < 3 && (
           <button
             type="button"
@@ -334,15 +271,7 @@ function Form({setAsoSequences}) {
             Next
           </button>
         )}
-        {step > 1 && !isProcessing && (
-          <button
-            type="button"
-            className={styles.btn}
-            onClick={() => setStep((s) => s - 1)}
-          >
-            Back
-          </button>
-        )}
+
         {step === 3 && (
           <button
             type="button"
@@ -354,6 +283,7 @@ function Form({setAsoSequences}) {
             <i className="fa-solid fa-arrow-right fa-lg" />
           </button>
         )}
+
         {step === 4 && !showThankYou && (
           <button
             className={`${styles.btn} ${styles.run_btn}`}
@@ -384,6 +314,7 @@ function Form({setAsoSequences}) {
             <span>Back to Home</span>
           </button>
         )}
+
         {downloadFile && (
           <a
             href={URL.createObjectURL(downloadFile)}

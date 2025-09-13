@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import FileUploader from "../FileUploader";
-import { BACKEND_URL } from "../../constants";
+import { fastaParser, genBankParser } from "../../geneFileParsers";
 
-
-const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+const fastaExtensions = ["fasta", "fna", "ffn", "faa", "frn", "fa"];
+const geneBankExtensions = ["genbank", "gbk", "gb"];
 
 function FastaUploader({
   setName,
@@ -16,75 +16,40 @@ function FastaUploader({
   const [file, setFile] = useState();
 
   useEffect(() => {
-    if (!file) return;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const fileContent = e.target.result;
+        const fileExtension = file.name.split(".").at(-1).toLowerCase();
+        let sequences;
+        if (fastaExtensions.includes(fileExtension)) {
+          sequences = fastaParser(fileContent, file.name);
+        } else if (geneBankExtensions.includes(fileExtension)) {
+          sequences = genBankParser(fileContent, file.name);
+        } else {
+          sequences = [
+            {
+              seq: `Something wrong has happened, you may have uploaded an unsupported file: .${fileExtension}`,
+              name: "error",
+            },
+          ];
+        }
 
-    const name = file.name.toLowerCase();
-    if (name.endsWith(".fasta") || name.endsWith(".fa")|| name.endsWith(".fna")) {
-      fastaMode(file);
-    } else if (name.endsWith(".gb") || name.endsWith(".gbk")) {
-      gbMode(file);
-    } else {
-      alert("Unsupported file type. Upload .fasta / .fa / .gb / .gbk");
+        let { seq, name } = sequences[0];
+
+        // clear sequence from wrong charachters
+        if ([...fastaExtensions, ...geneBankExtensions].includes()) {
+          seq = seq.replace(/[^ACGT]/gim, "").toLocaleUpperCase();
+        }
+
+        setName(name);
+        setSequence(seq);
+        onUpload();
+      };
+
+      reader.readAsText(file);
     }
   }, [file]);
-
-  // Helper to upload chunk with form data
-  const uploadChunk = async (chunk, filename, isLastChunk, url) => {
-    const formData = new FormData();
-    formData.append("filename", filename);
-    formData.append("is_last_chunk", isLastChunk ? "true" : "false");
-    formData.append("chunk", chunk);
-
-    const res = await fetch(url, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Upload failed");
-    }
-  };
-
-  const fastaMode = async (file) => {
-    // Use original file name + timestamp as unique filename on server
-    const filename = `${file.name}_${Date.now()}.fasta`;
-    try {
-      let offset = 0;
-      while (offset < file.size) {
-        const chunk = file.slice(offset, offset + CHUNK_SIZE);
-        offset += CHUNK_SIZE;
-        const isLastChunk = offset >= file.size;
-
-        await uploadChunk(chunk, filename, isLastChunk, `${BACKEND_URL}/upload_gene_fa`);
-      }
-      setName(filename); 
-      onUpload();
-      if (clearFileAfterUpload) setFile(null);
-    } catch (e) {
-      alert("Upload error: " + e.message);
-    }
-  };
-
-  const gbMode = async (file) => {
-    const filename = `${file.name}_${Date.now()}.gb`;
-    try {
-      let offset = 0;
-      while (offset < file.size) {
-        const chunk = file.slice(offset, offset + CHUNK_SIZE);
-        offset += CHUNK_SIZE;
-        const isLastChunk = offset >= file.size;
-
-        await uploadChunk(chunk, filename, isLastChunk, `${BACKEND_URL}/upload_gene_gb`);
-      }
-      setName(filename); 
-      onUpload();
-      if (clearFileAfterUpload) setFile(null);
-    } catch (e) {
-      alert("Upload error: " + e.message);
-    }
-  };
-
   return (
     <FileUploader
       setFile={setFile}
