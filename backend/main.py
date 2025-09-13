@@ -242,3 +242,77 @@ def escape_html(s: str) -> str:
         .replace('"', "&quot;")
         .replace("'", "&#039;")
     )
+from fastapi import BackgroundTasks
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from io import StringIO
+
+
+class RunASORequest(BaseModel):
+    geneInputType: str
+    organismFile: str
+    geneFile: Optional[str] = None
+    geneSequence: Optional[str] = None
+    numericParams: Dict[str, Any]
+    viewASO: bool
+    userEmail: str
+    userName: str
+
+def run_aso_task(request_data: RunASORequest):
+    try:
+        # Generate ASO sequences (long-running)
+        gene_data = request_data.geneFile if request_data.geneInputType == "Upload Gene Fasta" else request_data.geneSequence
+        result = foo(
+            request_data.organismFile,
+            gene_data,
+            request_data.numericParams,
+            request_data.viewASO,
+        )
+
+        # Convert ASO to FASTA
+        fasta_records = [SeqRecord(Seq(aso["sequence"]), id=aso["name"], description="") for aso in result["asoSequence"]]
+        fasta_str_io = StringIO()
+        SeqIO.write(fasta_records, fasta_str_io, "fasta")
+        fasta_bytes = fasta_str_io.getvalue().encode()
+        fasta_base64 = base64.b64encode(fasta_bytes).decode()
+
+        # Send "processing completed" email
+        import asyncio
+        asyncio.run(send_processing_completed_email(
+            to=request_data.userEmail,
+            name=request_data.userName,
+            asoData={
+                "geneInputType": request_data.geneInputType,
+                "organismFile": request_data.organismFile,
+                "geneFile": request_data.geneFile,
+                "geneSequence": request_data.geneSequence,
+                "numericParams": request_data.numericParams,
+                "viewASO": request_data.viewASO,
+            },
+            file=fasta_base64
+        ))
+
+    except Exception as e:
+        logging.exception("Error in background ASO task")
+
+@app.post("/run_aso")
+async def run_aso(request_data: RunASORequest, background_tasks: BackgroundTasks):
+    # Send "processing started" email immediately
+    await send_processing_started_email(
+        to=request_data.userEmail,
+        name=request_data.userName,
+        asoData={
+            "geneInputType": request_data.geneInputType,
+            "organismFile": request_data.organismFile,
+            "geneFile": request_data.geneFile,
+            "geneSequence": request_data.geneSequence,
+            "numericParams": request_data.numericParams,
+            "viewASO": request_data.viewASO,
+        },
+    )
+
+    # Add the long-running ASO generation to background tasks
+    background_tasks.add_task(run_aso_task, request_data)
+
+    # Return immediately
+    return {"status": "Processing started"}
