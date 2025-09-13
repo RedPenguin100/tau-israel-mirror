@@ -11,11 +11,11 @@ pages:
     - cd client
     - npm install
   script:
-    # Build application and move content to public folder
+    # Build and export application, then move content to public folder
     - npm run build
+    - npm run export     
     - cd ..
-    - mkdir public
-    # move the produced out directory into public
+    - mkdir -p public
     - mv client/out/* public
   after_script:
     # Cleanup
@@ -25,5 +25,3 @@ pages:
       - public
   only:
     - main
-
-
