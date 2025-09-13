@@ -7,16 +7,19 @@ cache:
 
 pages:
   before_script:
+    # Install packages
     - cd client
-    - npm install
+    - npm ci
   script:
+    # Build application and move content to public folder
     - npm run build
     - cd ..
-    - mkdir -p public
-    - cp -r client/.next public/.next   # copy the build output
-    - cp client/package.json public/    # needed for SSR
+    - mkdir public
+    # move the produced out directory into public
+    - mv client/out/* public
   after_script:
-    - echo "Cleanup done"
+    # Cleanup
+    - rm -rf client/out
   artifacts:
     paths:
       - public
