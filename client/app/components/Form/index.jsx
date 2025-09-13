@@ -308,7 +308,7 @@ function Form({ setAsoSequences }) {
           <button
             type="button"
             className={styles.btn}
-            onClick={() => window.location.href = "/"}
+            onClick={() => window.location.href = "/software-tools/tau-israel/"}
           >
             <i className="fa-solid fa-home fa-lg" />
             <span>Back to Home</span>
