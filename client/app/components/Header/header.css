@@ -11,13 +11,15 @@ header {
     color: white;
 }
 
-
 .logo {
     height: 100px;
     aspect-ratio: auto;
     margin-top: -3rem;
     margin-left: -3rem;
+    max-width: 200px;
+    object-fit: contain;
 }
+
 .top {
     display: flex;
     justify-content: space-between;
@@ -38,11 +40,13 @@ nav > ul {
     display: flex;
     gap: 0.5rem;
 }
+
 nav > ul > li {
     list-style: none;
     display: inline;
     font-size: 1.2rem;
 }
+
 nav > ul > li > a {
     border-radius: var(--border-radius);
     color: #122848;
@@ -53,7 +57,7 @@ nav > ul > li > a {
 .title {
     position: relative;
     z-index: 2;
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
     font-weight: 800;
     line-height: 1.2;
     margin-bottom: 0.5em;
@@ -61,34 +65,29 @@ nav > ul > li > a {
     margin-top: -4rem;
 }
 
-p {
+header p {
     margin-top: -3rem;
     margin-bottom: 0;
     text-wrap: pretty;
     position: relative;
     z-index: 2;
-    font-size: 1.25rem;
+    font-size: clamp(1rem, 3vw, 1.25rem);
     font-weight: 400;
     line-height: 1.5;
     max-width: 800px;
     text-align: center;
+    padding: 0 1rem;
 }
+
 nav > ul > li > a:is(:hover, :focus-within) {
     background-position: 0;
     background-color: white;
     color: var(--accent);
     text-decoration: none;
 }
+
 nav > ul > li > a:is(:hover, :focus-within) h2 {
     color: rgb(var(--accent-light));
-}
-
-
-
-@media screen and (max-width: 800px) {
-    .logo {
-    height: 60px;
-    }
 }
 
 .my-link {
@@ -96,7 +95,7 @@ nav > ul > li > a:is(:hover, :focus-within) h2 {
     font-weight: bold;
 }
 
-/* Wave layers - Updated to cover full header */
+/* Wave layers - keeping exactly the same */
 #shape {
     position: absolute;
     left: 0;
@@ -113,26 +112,31 @@ header img.waves:nth-child(1) {
     bottom: -0.1vw;
     animation: move-1 5s infinite;
 }
+
 @keyframes move-1 {
     50% {
         transform: translateY(15px);
     }
 }
+
 header img.waves:nth-child(2) {
     opacity: 0.3;
     bottom: 0.5vw;
     animation: move-2 4s infinite;
 }
+
 @keyframes move-2 {
     50% {
         transform: translateY(35px);
     }
 }
+
 header img.waves:nth-child(3) {
     bottom: 0.3vw;
     opacity: 0.2;
     animation: move-3 3.5s infinite;
 }
+
 @keyframes move-3 {
     50% {
         transform: translateY(25px);
@@ -144,8 +148,219 @@ header img.waves:nth-child(4) {
     opacity: 0.3;
     animation: move-4 3s infinite;
 }
+
 @keyframes move-4 {
     50% {
         transform: translateY(20px);
+    }
+}
+
+/* Mobile responsiveness - keeping all proportions exactly the same */
+@media screen and (max-width: 800px) {
+    .logo {
+        height: 60px;
+        max-width: 150px;
+    }
+
+    header {
+        padding: 2rem 0.75rem;
+        min-height: 300px;
+    }
+
+    nav > ul > li {
+        font-size: 1rem;
+    }
+
+    nav > ul > li > a {
+        padding: 0.3em 0.5em;
+        font-size: 0.9rem;
+    }
+}
+
+/* Fix for 768x1024 logo overflow */
+@media screen and (max-width: 768px) {
+    .logo {
+        height: 60px;
+        max-width: 150px;
+        margin-top: -1.5rem; /* Less negative margin to prevent overflow */
+        margin-left: -1.5rem; /* Less negative margin to prevent overflow */
+    }
+
+    header {
+        padding: 2rem 0.75rem;
+        min-height: 300px;
+    }
+}
+
+/* Tablet-specific fixes for iPads */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .logo {
+        height: 70px;
+        max-width: 160px;
+        margin-top: -1rem; /* Small negative margin for proper positioning */
+        margin-left: -1rem; /* Small negative margin to move it slightly right */
+    }
+
+    header {
+        padding: 2.5rem 1rem;
+        min-height: 320px;
+    }
+}
+
+@media screen and (min-width: 820px) and (max-width: 1180px) {
+    .logo {
+        height: 80px;
+        max-width: 180px;
+        margin-top: -1.2rem; /* Small negative margin for proper positioning */
+        margin-left: -1.2rem; /* Small negative margin to move it slightly right */
+    }
+
+    header {
+        padding: 2.8rem 1.5rem;
+        min-height: 340px;
+    }
+}
+
+/* General tablet range - covers most tablet devices */
+@media screen and (min-width: 768px) and (max-width: 1366px) and (max-height: 1366px) {
+    .logo {
+        height: clamp(60px, 8vw, 90px);
+        max-width: clamp(150px, 20vw, 200px);
+        margin-top: clamp(-1rem, -1.5vw, -0.5rem); /* Less aggressive negative margins */
+        margin-left: clamp(-1rem, -1.5vw, -0.5rem); /* Less aggressive negative margins */
+    }
+
+    header {
+        padding: clamp(2.5rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem);
+        min-height: clamp(300px, 40vh, 360px);
+    }
+}
+
+
+@media screen and (max-width: 600px) {
+    header {
+        padding: 1.5rem 0.5rem;
+        min-height: 280px;
+    }
+
+    .logo {
+        height: 50px;
+        max-width: 120px;
+        margin-top: -2rem;
+        margin-left: -2rem;
+    }
+
+    .top {
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .top nav {
+        margin-right: 0;
+        margin-top: 0;
+    }
+
+    nav > ul {
+        gap: 0.25rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    nav > ul > li {
+        font-size: 0.9rem;
+    }
+
+    nav > ul > li > a {
+        padding: 0.25em 0.4em;
+        font-size: 0.8rem;
+    }
+
+    .title {
+        font-size: clamp(1.4rem, 8vw, 2rem);
+        margin-top: -2rem;
+        margin-bottom: 0.25em;
+    }
+
+    header p {
+        font-size: clamp(0.85rem, 4vw, 1.1rem);
+        margin-top: -1.5rem;
+        padding: 0 0.5rem;
+        max-width: 95%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    header {
+        padding: 1rem 0.25rem;
+        min-height: 250px;
+    }
+
+    .logo {
+        height: 40px;
+        max-width: 100px;
+        margin-top: -1.5rem;
+        margin-left: -1.5rem;
+    }
+
+    .top {
+        gap: 0.75rem;
+    }
+
+    nav > ul {
+        gap: 0.15rem;
+    }
+
+    nav > ul > li > a {
+        padding: 0.2em 0.3em;
+        font-size: 0.75rem;
+    }
+
+    .title {
+        font-size: 1.3rem;
+        margin-top: -1.5rem;
+    }
+
+    header p {
+        font-size: 0.8rem;
+        margin-top: -1rem;
+        padding: 0 0.25rem;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    header {
+        padding: 0.75rem 0.15rem;
+        min-height: 220px;
+    }
+
+    .logo {
+        height: 35px;
+        max-width: 80px;
+        margin-top: -0.5rem; /* Less negative margin to prevent overflow */
+        margin-left: -0.5rem; /* Less negative margin to prevent overflow */
+    }
+
+    nav > ul {
+        flex-direction: column;
+        gap: 0.1rem;
+        align-items: center;
+    }
+
+    nav > ul > li > a {
+        padding: 0.15em 0.25em;
+        font-size: 0.7rem;
+    }
+
+    .title {
+        font-size: 1.1rem;
+        margin-top: -1rem;
+    }
+
+    header p {
+        font-size: 0.75rem;
+        margin-top: -0.75rem;
     }
 }
