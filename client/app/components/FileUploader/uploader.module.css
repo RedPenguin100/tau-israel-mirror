@@ -78,3 +78,62 @@
   margin-left: 1rem;
   cursor: pointer;
 }
+
+
+/* Mobile-specific styles */
+@media screen and (max-width: 600px) {
+    .drag_area {
+        padding: 0.5em 0.8em; /* Slightly less padding */
+    }
+
+    .drag_area p {
+        font-size: 0.9em; /* Slightly smaller text */
+        text-align: center;
+    }
+
+    .drag_area button {
+        padding: 0.6rem 0.8rem; /* Slightly smaller button */
+        font-size: 0.9em;
+    }
+
+    .support {
+        font-size: 0.65em; /* Smaller support text */
+        text-align: center;
+    }
+
+    .selected_file {
+        max-width: 90%; /* Wider on mobile */
+        padding: 0.4rem 0.8rem;
+        gap: 0.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .drag_area {
+        padding: 0.4em 0.6em;
+    }
+
+    .drag_area p {
+        font-size: 0.8em;
+    }
+
+    .drag_area button {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.8em;
+    }
+
+    .support {
+        font-size: 0.6em;
+    }
+
+    .selected_file {
+        max-width: 95%;
+        padding: 0.3rem 0.6rem;
+        gap: 0.4rem;
+        font-size: 0.9em;
+    }
+
+    .clear_file_input {
+        margin-left: 0.5rem;
+    }
+}
