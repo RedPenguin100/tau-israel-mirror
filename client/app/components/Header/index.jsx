@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import ourLogo from "../public/our_logo.png"; // import from public folder
 import "./header.css";
 
 function Header({ title, subtitle }) {
@@ -12,35 +14,32 @@ function Header({ title, subtitle }) {
       <img src="https://static.igem.wiki/teams/5661/waves/wave-5.svg" alt="" id="shape" />
 
       <section className="top">
-        <img
-          src={`${process.env.ASSET_PREFIX || ""}/our_logo.png`}
+        <Image
+          src={ourLogo}
+          alt="Logo"
           className="logo"
+          width={100} // adjust to your desired size
+          height={100} // adjust to your desired size
         />
         <nav>
           <ul>
             <li>
-              <Link href="/software-tools/tau-israel/" className="my-link">
-                ASO Designer
-              </Link>
+              <Link href="/tau-israel/software/" className="my-link">ASO Designer</Link>
             </li>
             <li>
-              <Link href="/software-tools/tau-israel/FAQ" className="my-link">
-                FAQ
-              </Link>
+              <Link href="/tau-israel/software/FAQ" className="my-link">FAQ</Link>
             </li>
             <li>
-              <Link href="/software-tools/tau-israel/user_guide" className="my-link">
-                User Guide
-              </Link>
+              <Link href="/tau-israel/software/user_guide" className="my-link">User Guide</Link>
             </li>
             <li>
-                <Link
-                  href="https://2025.igem.wiki/tau-israel/software"
-                  target="_blank"
-                  className="my-link"
-                >
-                  Software
-                </Link>
+              <Link
+                href="https://2025.igem.wiki/tau-israel/software"
+                target="_blank"
+                className="my-link"
+              >
+                Software
+              </Link>
             </li>
             <li>
               <Link
