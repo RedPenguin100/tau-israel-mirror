@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import ourLogo from "../public/our_logo.png"; // import from public folder
+import ourLogo from ../../../public/our_logo.png; 
 import "./header.css";
 
 function Header({ title, subtitle }) {
