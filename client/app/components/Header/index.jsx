@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import ourLogo from ../../../public/our_logo.png; 
 import "./header.css";
 
 function Header({ title, subtitle }) {
@@ -15,11 +14,11 @@ function Header({ title, subtitle }) {
 
       <section className="top">
         <Image
-          src={ourLogo}
+          src="/our_logo.png" // public folder root path
           alt="Logo"
           className="logo"
-          width={100} // adjust to your desired size
-          height={100} // adjust to your desired size
+          width={100} // adjust as needed
+          height={100} // adjust as needed
         />
         <nav>
           <ul>
