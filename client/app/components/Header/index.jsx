@@ -19,17 +19,17 @@ function Header({ title, subtitle }) {
         <nav>
           <ul>
             <li>
-              <Link href="/" className="my-link">
+              <Link href="/software-tools/tau-israel/" className="my-link">
                 ASO Designer
               </Link>
             </li>
             <li>
-              <Link href="/FAQ" className="my-link">
+              <Link href="/software-tools/tau-israel/FAQ" className="my-link">
                 FAQ
               </Link>
             </li>
             <li>
-              <Link href="/user_guide" className="my-link">
+              <Link href="/software-tools/tau-israel/user_guide" className="my-link">
                 User Guide
               </Link>
             </li>
