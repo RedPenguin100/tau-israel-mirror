@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asodesigner"
+version = "0.1.2"
+description = "Feature extraction and analysis toolkit for antisense oligonucleotide design."
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+authors = [
+    { name = "TAU-Israel iGEM Team" }
+]
+keywords = ["antisense", "oligonucleotide", "bioinformatics", "igem"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "numba",
+    "biopython",
+    "ViennaRNA",
+    "primer3-py",
+    "gffutils",
+    "codon-bias",
+    "fuzzysearch",
+    "tqdm",
+    "multiprocess",
+    "gget",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+"Homepage" = "https://2025.igem.wiki/tau-israel/home"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["asodesigner", "asodesigner.*"]

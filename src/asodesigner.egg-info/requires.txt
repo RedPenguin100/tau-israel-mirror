@@ -1,0 +1,14 @@
+numpy
+pandas
+scipy
+matplotlib
+numba
+biopython
+ViennaRNA
+primer3-py
+gffutils
+codon-bias
+fuzzysearch
+tqdm
+multiprocess
+gget

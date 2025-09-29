@@ -2,3 +2,6 @@
 # large data
 client/app/data/
 *.gtf.gz
+src/cache/
+cache/
+dist/

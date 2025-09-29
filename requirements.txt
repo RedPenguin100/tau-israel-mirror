@@ -1,0 +1,23 @@
+# Core scientific stack
+numpy==2.1.3
+pandas==2.2.3
+scipy==1.15.2
+matplotlib==3.9.1
+
+# Performance / acceleration
+numba==0.61.0
+
+# Bioinformatics
+biopython==1.85          # provides 'Bio.SeqUtils.gc_fraction'
+ViennaRNA==2.7.0         # Python bindings; may require system ViennaRNA installed
+primer3-py==2.0.3        # import name: 'primer3'
+gffutils==0.13
+codon-bias==0.3.5
+gget==0.29.3
+
+# Text search / progress
+fuzzysearch==0.7.3
+tqdm==4.67.1
+
+# Multiprocessing variant (distinct from stdlib 'multiprocessing')
+multiprocess==0.70.18
