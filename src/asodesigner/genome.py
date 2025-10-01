@@ -1,7 +1,4 @@
 """Minimal helper for downloading and caching the human hg38 genome."""
-
-from __future__ import annotations
-
 import gzip
 import os
 import shutil

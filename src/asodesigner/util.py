@@ -7,25 +7,7 @@ def get_longer_string(s1: str, s2: str) -> str:
     return s1 if len(s1) >= len(s2) else s2
 
 @njit
-def get_purine_content(seq: str) -> float:
-    """
-    Calculates the fraction of purine bases (A and G) in the sequence.
-    Purine-rich sequences may be more stable and bind better to RNA targets.
-    """
-    if len(seq) == 0:
-        return 0.
-
-    purine_count = 0
-    for i in range(len(seq)):
-        if seq[i] in "AaGg":
-            purine_count +=1
-
-    return purine_count / len(seq)
-
-
-
-@njit
-def get_nucleotide_watson_crick(nucleotide: chr) -> chr:
+def get_nucleotide_watson_crick(nucleotide):
     if nucleotide == 'A':
         return 'T'
     if nucleotide == 'G':
@@ -34,7 +16,7 @@ def get_nucleotide_watson_crick(nucleotide: chr) -> chr:
         return 'G'
     if nucleotide == 'U' or nucleotide == 'T':
         return 'A'
-    raise ValueError(f"Unknown codon {nucleotide}")
+    raise ValueError(f"Unknown nucleotide {nucleotide}")
 
 
 @njit
@@ -243,19 +225,6 @@ def nucleotide_wobble(codon_third: chr, anticodon_first: chr) -> float:
 
 
 @njit
-def get_nucleotide_watson_crick(nucleotide):
-    if nucleotide == 'A':
-        return 'T'
-    if nucleotide == 'G':
-        return 'C'
-    if nucleotide == 'C':
-        return 'G'
-    if nucleotide == 'U' or nucleotide == 'T':
-        return 'A'
-    raise ValueError(f"Unknown nucleotide {nucleotide}")
-
-
-@njit
 def is_nucleotide_wobble(codon_third: chr, anticodon_first: chr) -> bool:
     return 1. - nucleotide_wobble(codon_third, anticodon_first) > 1e-6  # Lowest Wobble yields 1e-4 so this is safe
 
@@ -279,39 +248,3 @@ def is_single_trna_translating(trna: str, codon: str) -> bool:
     anticodon_first = trna[0]
     return is_nucleotide_wobble(codon_third, anticodon_first)
 
-
-@njit
-def calculate_tai(seq: str) -> float:
-    if len(seq) % 3 != 0:
-        raise ValueError(f"Sequence length {len(seq)} must be divisible by 3 ")
-
-    trna_dict = get_trna_dict()
-
-    codon_to_weight_dict = Dict.empty(key_type=types.string, value_type=types.float64)
-    codon_to_aa = get_codon_to_aa()
-
-    all_codons = get_all_codons()
-
-    for codon in all_codons:
-        weight_per_trna = []
-        codon_friends = get_all_aa_codon_friends(codon_to_aa[codon])
-
-        for trna, copy_number in trna_dict.items():
-            # Wobble can't happen between different amino acids
-            if get_antisense(trna) not in codon_friends:
-                continue
-
-            if is_single_trna_translating(trna, codon):
-                s_ij = nucleotide_wobble(codon[2], trna[0])
-                weight_per_trna.append((1 - s_ij) * copy_number)
-        codon_to_weight_dict[codon] = sum(weight_per_trna)
-
-    # we would like to exclude the last (stop) codon from the calculation
-    weights = []
-
-    for i in range(0, len(seq) - 3, 3):
-        codon = seq[i: i + 3]
-        weights.append(codon_to_weight_dict[codon])
-
-    np_weights = np.array(weights) / np.max(weights)  # normalize so number is between 0 and 1
-    return np.exp(np.mean(np.log(np_weights)))

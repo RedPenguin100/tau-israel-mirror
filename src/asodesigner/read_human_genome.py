@@ -7,8 +7,9 @@ from numba import njit
 from numba.typed import Dict
 
 from .consts import HUMAN_GFF, HUMAN_DB_BASIC_INTRONS, HUMAN_DB_BASIC_INTRONS_GZ
-from .file_utils import read_human_genome_fasta_dict
-from .process_utils import LocusInfo, run_off_target_wc_analysis
+from .genome_file_utils import read_human_genome_fasta_dict
+from .LocusInfo import LocusInfo
+from .process_utils import run_off_target_wc_analysis
 from .timer import Timer
 
 

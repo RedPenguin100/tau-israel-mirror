@@ -24,9 +24,8 @@ pip install -r requirements.txt
 Functions are organised by module. For example, to compute a few sequence-derived features:
 
 ```python
-from asodesigner import seq_features
+from asodesigner.features import seq_features
 
-enc = seq_features.compute_ENC("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG")
 gc = seq_features.get_gc_content("ATGGCC")
 ```
 
