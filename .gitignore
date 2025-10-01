@@ -5,3 +5,4 @@ src/cache/
 src/data/human/human_v34/dbs/human_gff_basic_introns.db
 cache/
 dist/
+.idea/
