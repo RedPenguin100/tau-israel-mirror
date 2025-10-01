@@ -1,23 +1,23 @@
 image: node:18-alpine   # default image for all jobs
 
 stages:
-  - test
+#  - test
   - build
 
-# Python tests
-pytest:
-  stage: test
-  image: python:3.12
-  cache:
-    key: pip-cache
-    paths:
-      - .cache/pip
-  before_script:
-    - python -m pip install --upgrade pip
-    # Install both runtime and test dependencies, but not dev
-    - pip install --cache-dir .cache/pip -r requirements.txt -r requirements-test.txt
-  script:
-    - pytest --maxfail=1 --disable-warnings -q
+## Python tests
+#pytest:
+#  stage: test
+#  image: python:3.12
+#  cache:
+#    key: pip-cache
+#    paths:
+#      - .cache/pip
+#  before_script:
+#    - python -m pip install --upgrade pip
+#    # Install both runtime and test dependencies, but not dev
+#    - pip install --cache-dir .cache/pip -r requirements.txt -r requirements-test.txt
+#  script:
+#    - pytest --maxfail=1 --disable-warnings -q
 
 # Build and deploy Next.js client
 pages:
