@@ -66,10 +66,11 @@ exp_rna_weights_37 = {
 }
 
 
-def get_exp_psrna_hybridization(seq: str, temp=37) -> float:
+def get_exp_psdna_hybridization(seq: str, temp=37) -> float:
     total_hybridization = 0
     for i in range(len(seq) - 1):
         L, R = seq[i], seq[i + 1]
+        # TODO: implement temp=50 if time permits
         # if temp == 50:
         #     total_hybridization += exp_rna_weights_37[L+R] - exp_ps_diff_weights_50[L + R]
         if temp == 37:
@@ -79,5 +80,5 @@ def get_exp_psrna_hybridization(seq: str, temp=37) -> float:
     return total_hybridization
 
 
-def get_exp_psrna_hybridization_normalized(seq: str, temp=50) -> float:
-    return get_exp_psrna_hybridization(seq, temp) / len(seq)
+def get_exp_psdna_hybridization_normalized(seq: str, temp=50) -> float:
+    return get_exp_psdna_hybridization(seq, temp) / len(seq)
