@@ -2,14 +2,10 @@ import bisect
 from pathlib import Path
 
 import gffutils
-from .experiment import maybe_create_experiment_folders, get_experiments
-from numba import njit
-from numba.typed import Dict
 
 from .consts import HUMAN_GFF, HUMAN_DB_BASIC_INTRONS, HUMAN_DB_BASIC_INTRONS_GZ
 from .genome_file_utils import read_human_genome_fasta_dict
 from .LocusInfo import LocusInfo
-from .process_utils import run_off_target_wc_analysis
 from .timer import Timer
 
 
@@ -144,69 +140,3 @@ def get_locus_to_data_dict(create_db=False, include_introns=False, gene_subset=N
             locus_info.introns = [element for _, element in locus_info.introns]
 
     return locus_to_data
-
-
-def main():
-    organism = 'human'
-    this_experiment = 'EntirePositiveControl'
-
-    fasta_dict = read_human_genome_fasta_dict()
-    maybe_create_experiment_folders(this_experiment)
-    experiments = get_experiments([this_experiment])
-
-
-    for experiment in experiments:
-        print(experiment.target_sequence)
-
-        run_off_target_wc_analysis(experiment, fasta_dict, organism=organism)
-        # run_off_target_hybridization_analysis(experiment, fasta_dict, organism=organism)
-
-
-if __name__ == '__main__':
-    main()
-    exit(2)
-    # with Timer() as t:
-    #     gene_to_data = get_locus_to_data_dict(include_introns=True)
-    # print(f"Time to read full human: {t.elapsed_time}s")
-    import pickle
-    from .consts import CACHE_DIR
-
-    genes_u = ['MTAP']
-    genes_u = ['HIF1A', 'APOL1', 'YAP1', 'SOD1', 'SNCA', 'IRF4', 'KRAS', 'KLKB1', 'SNHG14', 'DGAT2', 'IRF5',
-               'HTRA1', 'MYH7', 'MALAT1', 'HSD17B13']
-    #
-    # genes_u = ['HTRA1']
-    cache_path = CACHE_DIR / 'gene_to_data_simple_cache.pickle'
-    # if not cache_path.exists():
-    if True:
-        gene_to_data = get_locus_to_data_dict(include_introns=True, gene_subset=genes_u)
-        with open(cache_path, 'wb') as f:
-            pickle.dump(gene_to_data, f)
-    else:
-        with open(cache_path, 'rb') as f:
-            gene_to_data = pickle.load(f)
-# with Timer() as t:
-    #     i = 0
-    #     for gene in gene_to_data.items():
-    #         if len(gene[1].exons) == 0:
-    #             print("Weird gene, ", gene[0])
-    #         else:
-    #             i += len(gene[1].exons[0])
-    #         continue
-    # print(f"Iterate took: {t.elapsed_time}s, i={i}")
-    # print(gene_to_data)
-    # print(len(gene_to_data))
-
-    #
-    for gene in genes_u:
-        locus_info = gene_to_data[gene]
-        # print(gene)
-        # print(locus_info.cds_start)
-        # print(locus_info.cds_end)
-        # print(locus_info.full_mrna)
-    #     print(locus_info.utr_indices)
-    #     print(locus_info.cds_start)
-    #     print(locus_info.cds_end)
-    #     print(locus_info.exons)
-
-
