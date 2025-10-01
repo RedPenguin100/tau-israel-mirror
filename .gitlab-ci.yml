@@ -1,8 +1,14 @@
 image: node:18-alpine   # default image for all jobs
 
 stages:
-#  - test
+  - test
   - build
+
+# TODO: placeholder until we fix genome
+stub-test:
+  stage: test
+  script:
+    - echo "No tests enabled"
 
 ## Python tests
 #pytest:
