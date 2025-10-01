@@ -1,15 +1,36 @@
-image: node:18-alpine
+image: node:18-alpine   # default image for all jobs
 
-cache:
-  paths:
-    - client/node_modules/
-    - client/.next/cache/
+stages:
+  - test
+  - build
 
+# Python tests
+pytest:
+  stage: test
+  image: python:3.12
+  cache:
+    key: pip-cache
+    paths:
+      - .cache/pip
+  before_script:
+    - python -m pip install --upgrade pip
+    # Install both runtime and test dependencies, but not dev
+    - pip install --cache-dir .cache/pip -r requirements.txt -r requirements-test.txt
+  script:
+    - pytest --maxfail=1 --disable-warnings -q
+
+# Build and deploy Next.js client
 pages:
+  cache:
+    paths:
+      - client/node_modules/
+      - client/.next/cache/
+
   before_script:
     # Install packages
     - cd client
     - npm ci
+
   script:
     # Build application and move content to public folder
     - npm run build
@@ -17,11 +38,14 @@ pages:
     - mkdir public
     # move the produced out directory into public
     - mv client/out/* public
+
   after_script:
     # Cleanup
     - rm -rf client/out
+
   artifacts:
     paths:
       - public
+
   only:
     - main
