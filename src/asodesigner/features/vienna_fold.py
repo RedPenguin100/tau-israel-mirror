@@ -2,6 +2,9 @@ import ViennaRNA as RNA
 import numpy as np
 import math
 
+from numba import njit
+
+
 def get_weighted_energy(target_start, l, step_size, energies, window_size):
     """
     Calculate average energy for a target region by finding which sliding windows
@@ -52,7 +55,7 @@ def calculate_energies(target_seq, step_size, window_size):
     return energies
 
 
-
+@njit
 def get_sense_with_flanks(pre_mrna: str, sense_start: int, sense_length: int, flank_size: int) -> str:
     """
     Re  turns the sense sequence with `flank_size` nucleotides on each side (if available).

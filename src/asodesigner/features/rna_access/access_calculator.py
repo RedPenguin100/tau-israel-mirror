@@ -3,10 +3,35 @@ import math
 import numpy as np
 import pandas as pd
 
-
 from Bio.SeqUtils import gc_fraction
 
 from .rna_access import RNAAccess
+
+
+def get_cache(seed_sizes, access_size):
+
+    # Mimick original logic
+    seed_sizes = list(filter(lambda x: x <= access_size, seed_sizes))
+
+
+    cache = {}
+    for super_seed_size in seed_sizes:
+        step = super_seed_size // 2
+        rel_offsets = list(range(0, access_size - super_seed_size, step))
+        rel_offsets.append(access_size - super_seed_size)
+
+        n_values = math.ceil((access_size - super_seed_size) / step) + 1
+        assert len(rel_offsets) == n_values
+
+        weights = np.ones(n_values)
+        if n_values > 1:
+            last_weight = (rel_offsets[-1] - rel_offsets[-2]) / step
+            weights[-1] = last_weight
+
+        cache[super_seed_size] = (np.array(rel_offsets), weights, access_size / super_seed_size)
+    return cache
+
+
 
 
 # noinspection DuplicatedCode
@@ -33,7 +58,7 @@ class AccessCalculator(object):
 
     @classmethod
     def calc_access_energies(
-            cls, rna_seq, access_size, seed_sizes, max_span, uuid_str):
+            cls, rna_seq, access_size, seed_sizes, max_span, uuid_str, cache=None):
 
         rna_size = len(rna_seq)
 
@@ -80,7 +105,6 @@ class AccessCalculator(object):
         indexes = list(zip(*ind_info_list))[0]
         records = list(zip(*ind_info_list))[1]
         df = pd.DataFrame(records, index=indexes)
-
         return df
 
     @classmethod
@@ -88,7 +112,7 @@ class AccessCalculator(object):
             cls, rna_seq, access_size,
             min_gc, max_gc, gc_ranges,
             access_win_size, access_seed_sizes,
-            uuid_str=None, temperature=None):
+            uuid_str=None, temperature=None, cache=None):
         """
         :param rna_seq: target mrna sequence
         :param access_size: target  access size
@@ -109,7 +133,7 @@ class AccessCalculator(object):
         gc_info = cls.calc_gc_info(rna_seq, access_size)
 
         access_energies = cls.calc_access_energies(
-            rna_seq, access_size, access_seed_sizes, access_win_size, uuid_str)
+            rna_seq, access_size, access_seed_sizes, access_win_size, uuid_str, cache=cache)
 
         # ae_col1 = f"{access_seed_size}_avg"
         # ae_col2 = f"{access_seed_size * 2}_avg"
@@ -141,23 +165,3 @@ class AccessCalculator(object):
         df = pd.concat(df_list, join='outer', axis=0).fillna(float('nan'))
 
         return df
-
-
-
-if __name__ == '__main__':
-    g_seq = 'AGCCGCUUU'
-    g_seq = 'ATGTCTAAGGGGGAAGAAGACAATATGGCGATTATTAAAGAGTTTATGAGATTTAAAGTACATATGGAAGGAAGTGTTAATGGTCACGAGTTTGAGATCGAAGGTGAAGGTGAAGGTCGTCCATATGAGGGTACGCAAACAGCAAAACTAAAGGTGACTAAAGGGGGACCATTACCTTTCGCTTGGGATATACTGTCACCACAATTCATGTACGGATCGAAAGCTTACGTAAAGCACCCGGCCGACATTCCTGATTATTTAAAGTTGTCTTTCCCTGAAGGGTTCAAATGGGAAAGAGTTATGAATTTTGAGGATGGAGGTGTTGTGACGGTAACTCAAGATTCATCTTTGCAAGATGGCGAATTCATTTATAAAGTTAAATTGAGAGGAACTAACTTTCCAAGCGATGGTCCAGTCATGCAAAAAAAGACCATGGGCTGGGAAGCTAGCTCAGAACGGATGTACCCGGAAGACGGCGCATTAAAGGGAGAGATCAAGCAGCGACTTAAGTTAAAAGATGGCGGGCATTATGATGCAGAAGTAAAGACAACCTACAAAGCCAAAAAACCCGTGCAGCTGCCTGGTGCGTATAATGTTAACATAAAACTAGACATTACATCCCACAACGAAGACTACACTATAGTCGAACAATACGAAAGGGCAGAAGGTAGACATTCGACAGGTGGTATGGATGAGTTGTATAAATAA'.replace('T', 'U')
-    g_access_size = 12
-    g_min_gc = 0
-    g_max_gc = 100
-    g_gc_ranges = 1
-    # g_temperature = 37
-    g_access_win_size = 120
-    g_access_seed_size = 3
-    g_access_seed_sizes = [g_access_seed_size * m for m in range(1, 4)]
-    g_df = AccessCalculator.calc(
-        g_seq, g_access_size, g_min_gc, g_max_gc, g_gc_ranges, g_access_win_size, g_access_seed_sizes)
-    print(g_df)
-
-    exit(0)
-
