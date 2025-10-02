@@ -5,13 +5,12 @@ from fuzzysearch import find_near_matches
 from numba import njit
 
 from .consts import DATA_PATH
-from .fold import get_trigger_mfe_scores_by_risearch, get_mfe_scores
+from .features.smart_hybridization import get_trigger_mfe_scores_by_risearch, get_mfe_scores
 from .util import get_antisense
 
 
 @njit
 def iterate_template(template_seq, l_values):
-    print("Hello")
     for l in l_values:
         for i in range(len(template_seq) - l + 1):
             yield i, l, template_seq[i:i + l]
@@ -19,7 +18,6 @@ def iterate_template(template_seq, l_values):
 
 @njit
 def iterate_template_antisense(template_seq, l_values):
-    print("Anti hello")
     for l in l_values:
         for i in range(len(template_seq) - l + 1):
             yield i, l, get_antisense(template_seq[i:i + l])
@@ -106,6 +104,7 @@ def get_angtpl2():
     with open(DATA_PATH / 'ANGPTL2_pre_mrna.txt', 'r') as file:
         return file.read()
 
+
 def get_bcl2_patent():
     with open(DATA_PATH / 'BCL2_human_premrna.txt', 'r') as file:
         return file.read()
@@ -130,7 +129,7 @@ def generate_scrambled(target_seq):
     return df
 
 
-def generate_scrambled_permutation(target_seq: str, l_values=[16,17,18,19,20,21]):
+def generate_scrambled_permutation(target_seq: str, l_values=[16, 17, 18, 19, 20, 21]):
     parsing_type = '2'
 
     aso_to_scores = dict()

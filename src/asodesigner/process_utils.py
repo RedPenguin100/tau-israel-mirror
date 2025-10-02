@@ -12,30 +12,16 @@ from .cache import load_cache_off_target_hybridization, load_cache_off_target_wc
     save_cache
 from .consts import EXPERIMENT_RESULTS, CACHE_DIR
 from .experiment import Experiment
-from .feature_names import SENSE_START, SENSE_LENGTH
-from .fold import get_trigger_mfe_scores_by_risearch, get_mfe_scores, dump_target_file, calculate_energies
+from .features.feature_names import SENSE_START, SENSE_LENGTH
+from .features.smart_hybridization import  get_trigger_mfe_scores_by_risearch, get_mfe_scores, dump_target_file
+from .features.vienna_fold import calculate_energies
 from .result import save_results_organism
 from .target_finder import iterate_template_antisense
 from .timer import Timer
 from .util import get_antisense
 
 
-class LocusInfo:
-    def __init__(self):
-        self.exons = []
-        self.introns = []
-        self.exon_indices = []
-        self.intron_indices = []
-        self.stop_codons = []
-        self.five_prime_utr = ""
-        self.three_prime_utr = ""
-        self.exon_concat = None
-        self.full_mrna = None
-        self.cds_start = None
-        self.cds_end = None
-        self.strand = None
-        self.gene_type = None
-        self.utr_indices = []
+
 
 
 def get_simplified_fasta_dict(fasta_dict):
