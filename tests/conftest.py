@@ -23,4 +23,4 @@ def short_mrna():
         with open(test_cache, 'rb') as f:
             gene_to_data = pickle.load(f)
 
-    yield gene_to_data[target_gene].full_mrna
+    yield gene_to_data[target_gene]

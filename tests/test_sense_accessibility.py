@@ -1,12 +1,11 @@
-import numpy as np
 import pytest
+import numpy as np
 
 import pandas as pd
 
 from asodesigner.consts_dataframe import *
-from asodesigner.features.rna_access.access_calculator import AccessCalculator, get_cache
-from asodesigner.features.rna_access.sense_accessibility import compute_sense_accessibility_value
-from asodesigner.features.vienna_fold import get_sense_with_flanks
+from asodesigner.features.feature_names import SENSE_LENGTH
+from asodesigner.populate.populate_sense_accessibility import populate_sense_accessibility, SENSE_AVG_ACCESSIBILITY
 from asodesigner.util import get_antisense
 
 FLANK_SIZE = 120
@@ -35,27 +34,11 @@ def get_init_df(target_mrna, aso_sizes=[16, 20]):
 
 
 def test_regression(short_mrna, n_compare=10, path="avg_sense_access.txt", use_saved=True):
-    df = get_init_df(short_mrna, [16])
-    print("Length mRNA: ", len(short_mrna))
+    df = get_init_df(short_mrna.full_mrna, [16])
+    print("Length mRNA: ", len(short_mrna.full_mrna))
 
-    avg_sense_predictions = []
-    access_cache = get_cache(SEED_SIZES, access_size=ACCESS_SIZE)
-
-    for idx, row in df.iterrows():
-        sense_start = row['sense_start']
-        sense_length = row['sense_length']
-
-        flanked_sense = get_sense_with_flanks(
-            str(short_mrna), sense_start, sense_length,
-            flank_size=FLANK_SIZE
-        )
-        avg_sense_access = compute_sense_accessibility_value(
-            sense_start, sense_length, flank=flanked_sense, flank_size=FLANK_SIZE, access_win_size=ACCESS_WIN_SIZE,
-            seed_sizes=SEED_SIZES, access_size=ACCESS_SIZE, cache=access_cache
-        )
-        avg_sense_predictions.append(avg_sense_access)
-        if n_compare is not None and len(avg_sense_predictions) >= n_compare:
-            break
+    populate_sense_accessibility(df, short_mrna)
+    avg_sense_predictions = list(df[SENSE_AVG_ACCESSIBILITY])
 
     if not use_saved:
         # write predictions so they can serve as regression data
@@ -68,6 +51,6 @@ def test_regression(short_mrna, n_compare=10, path="avg_sense_access.txt", use_s
         avg_sense_regression = np.loadtxt(path)
     # compare
     np.testing.assert_allclose(
-        np.array(avg_sense_predictions),
+        np.array(avg_sense_predictions[:n_compare]),
         np.array(avg_sense_regression[:n_compare])
     )

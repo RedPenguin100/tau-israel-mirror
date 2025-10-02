@@ -6,7 +6,7 @@ from tests.conftest import TEST_CACHE_PATH
 
 
 def test_regression(short_mrna):
-    energies = calculate_energies(str(short_mrna), 15, 40)
+    energies = calculate_energies(str(short_mrna.full_mrna), 15, 40)
     print(energies[-3:])
     energy = get_weighted_energy(2525, 16, 15, energies, 40)
 

@@ -193,6 +193,24 @@ def trna_copy_number(anti_codon: str) -> int:
     return get_trna_dict().get(anti_codon, 0)
 
 
+def _norm_rna_to_dna(seq: str) -> str:
+    """Normalize RNA to DNA alphabet (U->T), uppercase, strip whitespace."""
+    return str(seq).upper().replace('U', 'T').replace(' ', '').replace('\t', '').replace('\n', '')
+
+def _to_str_seq(x) -> str:
+    """
+    Coerce sequence-like (list/np.array/Series) or string to a clean uppercase DNA string.
+    Converts U->T and strips whitespace. Ensures slicing returns a plain string (avoids pandas iterable assignment).
+    """
+    if isinstance(x, str):
+        s = x
+    else:
+        try:
+            s = ''.join(list(x))
+        except Exception:
+            s = str(x)
+    return s.replace(' ', '').replace('\t', '').replace('\n', '').replace('U', 'T').upper()
+
 # For ease A and I are interchangeable, even though Wobble is only with inosine
 # Numbers are good only for S. Cerevisiae
 @njit
