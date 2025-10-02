@@ -68,7 +68,7 @@ export default function FAQPage() {
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               style={{
                 cursor: "pointer",
-                backgroundColor: "#4f69ffff", 
+                backgroundColor: "#6d81f0ff", 
                 padding: "0.5rem 1rem",
                 borderRadius: "5px",
               }}
