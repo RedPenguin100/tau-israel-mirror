@@ -7,3 +7,4 @@ src/asodesigner/features/rna_access/output
 cache/
 dist/
 .idea/
+data/human/transcripts/ACH-001328_transcriptome.csv
