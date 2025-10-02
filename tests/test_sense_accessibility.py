@@ -14,8 +14,7 @@ SEED_SIZE = 13
 SEED_SIZES = [SEED_SIZE * m for m in range(1, 4)]
 ACCESS_WIN_SIZE = 80
 
-
-def get_init_df(target_mrna, aso_sizes=[16, 20]):
+def get_init_df(target_mrna, aso_sizes=[16, 20], canonical_name='DDX11L1'):
     candidates = []
     sense_starts = []
     sense_lengths = []
@@ -29,7 +28,7 @@ def get_init_df(target_mrna, aso_sizes=[16, 20]):
             sense_lengths.append(aso_size)
             sense_starts_from_end.append(i)
     df = pd.DataFrame({SEQUENCE: candidates, SENSE_START: sense_starts, SENSE_LENGTH: sense_lengths,
-                       SENSE_START_FROM_END: sense_starts_from_end})
+                       SENSE_START_FROM_END: sense_starts_from_end, CANONICAL_GENE: canonical_name})
     return df
 
 

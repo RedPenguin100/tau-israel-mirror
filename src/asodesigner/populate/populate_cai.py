@@ -1,12 +1,15 @@
+import json
 from pathlib import Path
 
 import pandas as pd
 
 from asodesigner.consts import DATA_PATH
-from asodesigner.consts_dataframe import SEQUENCE
+from asodesigner.consts_dataframe import SEQUENCE, CANONICAL_GENE
 from asodesigner.features.cai import calc_CAI, calc_CAI_weight
 from asodesigner.util import _to_str_seq, get_antisense, _norm_rna_to_dna
 
+
+PARDIR = Path(__file__).parent
 
 def load_mrna_by_gene_from_files(files: list[str | Path], seq_column: str = "Original Transcript Sequence") -> dict[
     str, str]:
@@ -73,33 +76,10 @@ def populate_cai_for_aso_dataframe(aso_df, locus_info, cell_line='A431'):
     else:
         raise ValueError(f'Supporting only {SUPPORTED_CELL_LINES} at the moment.')
 
-    d_orig = load_mrna_by_gene_from_files(
-        [str(MRNA_FILENAME)],
-        seq_column="Original Transcript sequence"
-    )
-    transcript_df = pd.read_csv(MRNA_FILENAME)
-    transcript_df.loc[:, "ref sequence"] = (
-        transcript_df["Mutated Transcript sequence"].fillna(transcript_df["Original Transcript sequence"]))
+    with open(PARDIR / 'cai_cache' / 'weights_cache.json') as f:
+        weights_flat_dict = json.load(f)
 
-    TOP_N = 300
-    SEQ_COL = "ref sequence"
-    EXPR_COL = "expression_norm"
-
-    # Basic checks
-    assert EXPR_COL in transcript_df.columns, f"Missing '{EXPR_COL}' column"
-    assert SEQ_COL in transcript_df.columns, f"Missing '{SEQ_COL}' column"
-
-    # 1) Pick top-N by expression_norm
-    ref_df = transcript_df.sort_values(EXPR_COL, ascending=False).head(TOP_N).copy()
-
-    # 2) Take their sequences as-is (mRNA with U's; calc_CAI_weight handles U->T internally)
-    reference_seqs = ref_df[SEQ_COL].dropna().astype(str).tolist()
-
-    # 3) Build CAI weights
-    # TODO: cache weights and then delete this logic
-    weights_list, weights_flat = calc_CAI_weight(reference_seqs)
-
-    print(f"Built CAI weights from {len(reference_seqs)} transcript sequences (top {TOP_N} by {EXPR_COL}).")
+    weights_flat = weights_flat_dict[cell_line]
 
     # Column names
     SENSE_LENGTH = 'sense_length'  # Length of the ASO (nt)
@@ -120,11 +100,10 @@ def populate_cai_for_aso_dataframe(aso_df, locus_info, cell_line='A431'):
 
     # Cache CDS per gene
     gene_to_cds_info = {}
-    gene_to_mrna_real = {**d_orig}
 
     # ---- main loop ----
     for index, row in aso_df.iterrows():
-        gene_name = 'DDX11L1'
+        gene_name = row[CANONICAL_GENE]
 
         # Keep using your current pre-mRNA for flanks/exon-intron logic (coerced to clean string)
         pre_mrna = _to_str_seq(locus_info.full_mrna)
