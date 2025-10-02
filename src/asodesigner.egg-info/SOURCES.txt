@@ -19,6 +19,7 @@ asodesigner/features/rna_access/__init__.py
 asodesigner/features/rna_access/access_calculator.py
 asodesigner/features/rna_access/file_util.py
 asodesigner/features/rna_access/rna_access.py
+asodesigner/features/rna_access/sense_accessibility.py
 asodesigner/genome.py
 asodesigner/genome_file_utils.py
 asodesigner/LocusInfo.py
@@ -26,3 +27,5 @@ asodesigner/random_util.py
 asodesigner/read_human_genome.py
 asodesigner/timer.py
 asodesigner/util.py
+asodesigner/populate/populate_cai.py
+asodesigner/populate/populate_sense_accessibility.py
