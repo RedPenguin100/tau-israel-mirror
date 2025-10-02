@@ -1,6 +1,3 @@
-import ViennaRNA as RNA
-import numpy as np
-
 import os
 import re
 import random
@@ -9,38 +6,7 @@ from Bio.Seq import Seq
 from typing import Dict, List
 from enum import Enum
 
-from .consts import RISEARCH1_BINARY_PATH, TMP_PATH ,RISEARCH1_PATH
-
-
-def get_weighted_energy(target_start, l, step_size, energies, window_size):
-    target_end = target_start + l
-    proxy = np.zeros(l, dtype=np.float64)
-    window_residual = window_size % step_size
-
-    for j in range(target_start, target_end):
-        proxy_index = j - target_start
-        j_residual = j % step_size
-        j_energy = j // step_size
-
-        if j_energy < (window_size // step_size):
-            proxy[proxy_index] = np.mean(energies[0:(j_energy + 1)], dtype=np.float64)
-        else:
-            if j_residual <= (window_residual - 1):
-                proxy[proxy_index] = np.mean(
-                    [energies[j_energy - 2], energies[j_energy - 1], energies[j_energy]], dtype=np.float64)
-            else:
-                proxy[proxy_index] = np.mean(
-                    [energies[j_energy - 1], energies[j_energy]], dtype=np.float64)
-    return np.mean(proxy, dtype=np.float64)
-
-
-def calculate_energies(target_seq, step_size, window_size):
-    energies = np.empty(len(target_seq) // step_size + 1)
-    for i in range(0, len(target_seq) - window_size + 1, step_size):
-        _, mfe = RNA.fold(target_seq[i: i + window_size])
-        energies[i // step_size] = mfe
-    return energies
-
+from ..consts import RISEARCH1_BINARY_PATH, TMP_PATH, RISEARCH1_PATH
 
 '''
 note: I used hashing here to be able to run multiple sequences (triggers in my case) in parallel (for multiple triggers) without conflicts with the files,
@@ -107,7 +73,7 @@ def dump_target_file(target_filename: str, name_to_sequence: Dict[str, str]):
 def get_trigger_mfe_scores_by_risearch(trigger: str, name_to_sequence: Dict[str, str],
                                        interaction_type: Interaction = Interaction.DNA_RNA_NO_WOBBLE,
                                        minimum_score: int = 900, neighborhood: int = 0, parsing_type=None,
-                                       target_file_cache=None,e_modified = (249,100)) -> str:
+                                       target_file_cache=None, e_modified=(249, 100)) -> str:
     if not RISEARCH1_BINARY_PATH.is_file():
         raise FileNotFoundError(
             f'RIsearch binary is not found at {RISEARCH1_BINARY_PATH}. Please read the "RIsearch" part of the project readme.')
@@ -134,8 +100,8 @@ def get_trigger_mfe_scores_by_risearch(trigger: str, name_to_sequence: Dict[str,
     elif interaction_type == Interaction.RNA_RNA:
         m = 't04'
     elif interaction_type == Interaction.MODIFIED:
-        e1 , e2  = e_modified
-        m = f'modified {e1} {e2}'  
+        e1, e2 = e_modified
+        m = f'modified {e1} {e2}'
     else:
         raise ValueError(f"Unsupported interaction type: {interaction_type}")
 
@@ -145,7 +111,7 @@ def get_trigger_mfe_scores_by_risearch(trigger: str, name_to_sequence: Dict[str,
         if parsing_type is not None:
             args.append(f'-p{parsing_type}')
 
-        result = subprocess.check_output(args, universal_newlines=True, text=True, cwd=str(RISEARCH1_PATH) 
+        result = subprocess.check_output(args, universal_newlines=True, text=True, cwd=str(RISEARCH1_PATH)
                                          )
     finally:
         if target_file_cache is None:

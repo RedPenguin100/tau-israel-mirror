@@ -37,18 +37,3 @@ class FileUtil(object):
         file_dir = cls.get_3rd_dir()
         file_path = os.path.join(file_dir, file_name)
         return file_path
-
-
-if __name__ == '__main__':
-    import shlex
-    import subprocess
-
-    a = FileUtil.get_conda_activate_path()
-    # FileUtil.set_root_dir(2)
-    # t_dir = FileUtil.get_relative_to_root_dir()
-
-    cmd = f"which python"
-    command = shlex.split(cmd)
-    p = subprocess.run(command, capture_output=True)
-    b = p.stderr
-    i = 3
