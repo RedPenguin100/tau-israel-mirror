@@ -8,19 +8,69 @@ from .genome_file_utils import read_human_genome_fasta_dict
 from .LocusInfo import LocusInfo
 from .timer import Timer
 
+from tqdm import tqdm
+import threading
+import time
+
+
 
 def cond_print(text, verbose=False):
     if verbose:
         print(text)
 
 
+
 def create_human_genome_db(path: Path, create_introns=False):
     print("Creating human genome database. WARNING - this is slow!")
-    with Timer() as t:
-        db = gffutils.create_db(str(HUMAN_GFF), dbfn=str(path), force=True, keep_order=True,
-                                merge_strategy='merge', sort_attribute_values=True)
-        if create_introns:
-            db.update(list(db.create_introns()))
+    total_bytes = HUMAN_GFF.stat().st_size if HUMAN_GFF.is_file() else None
+    stop_event = threading.Event()
+
+    def _monitor():
+        bar_kwargs = {
+            "desc": "Building genome DB",
+            "unit": "B",
+            "unit_scale": True,
+            "unit_divisor": 1024,
+        }
+        if total_bytes:
+            bar_kwargs["total"] = total_bytes
+        else:
+            bar_kwargs["total"] = None
+
+        last_size = 0
+        with tqdm(**bar_kwargs) as bar:
+            while not stop_event.is_set():
+                if path.exists():
+                    size = path.stat().st_size
+                    if bar.total is not None and size > bar.total:
+                        bar.total = size
+                    increment = max(0, size - last_size)
+                    if increment:
+                        bar.update(increment)
+                        last_size = size
+                time.sleep(0.5)
+
+            if path.exists():
+                size = path.stat().st_size
+                if bar.total is not None and size > bar.total:
+                    bar.total = size
+                increment = max(0, size - last_size)
+                if increment:
+                    bar.update(increment)
+
+    monitor = threading.Thread(target=_monitor, daemon=True)
+    monitor.start()
+
+    try:
+        with Timer() as t:
+            db = gffutils.create_db(str(HUMAN_GFF), dbfn=str(path), force=True, keep_order=True,
+                                    merge_strategy='merge', sort_attribute_values=True)
+            if create_introns:
+                db.update(list(db.create_introns()))
+    finally:
+        stop_event.set()
+        monitor.join()
+
     print(f"DB create took: {t.elapsed_time}s")
     return db
 

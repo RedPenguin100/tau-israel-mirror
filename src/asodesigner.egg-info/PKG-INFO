@@ -74,25 +74,22 @@ Refer to the individual module docstrings for detailed behaviour and expected in
    correctly.
 
 
-## Genome Cache
+## Genome Data
 
-`asodesigner.genome.get_hg38_genome_path()` downloads hg38 into `cache/genomes/hg38`
-when the file is first requested and returns the local FASTA path. Set
-`ASODESIGNER_HG38_PATH` if you already have a FASTA on disk, or
-`ASODESIGNER_HG38_URL` to use a different mirror.
+ASOdesigner assumes you already have an hg38 FASTA on disk. Place the file
+under `cache/genomes/hg38/` (optionally compressed as `hg38.fa.gz`) or point the
+`ASODESIGNER_HG38_PATH` environment variable at an existing FASTA.
 
 ## Docker Compose Workflow
 
-`docker-compose.yml` keeps the genome in a named volume so large files stay out
-of the repository. Start the stack with the default curl download:
+`docker-compose.yml` expects the FASTA to be available at the path configured by
+`ASODESIGNER_HG38_PATH` (defaulting to
+`/workspace/cache/genomes/hg38/hg38.fa`). Ensure the file exists in the mapped
+directory before starting the stack:
 
 ```bash
-docker compose up
+ASODESIGNER_HG38_PATH=/workspace/cache/genomes/hg38/hg38.fa docker compose up
 ```
-
-Switch to the simple Python downloader by setting `GENOME_FETCH_METHOD=python`.
-Both services mount the `genome-cache` volume, so subsequent runs reuse the same
-FASTA file.
 
 ## Building and Publishing to PyPI
 

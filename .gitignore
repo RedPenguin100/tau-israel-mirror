@@ -1,10 +1,30 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# packaging & build artifacts
+*.egg-info/
+*.egg
+build/
+dist/
+
 # large data
 client/app/data/
-*.gtf.gz
-src/cache/
-src/data/human/human_v34/dbs/human_gff_basic_introns.db
-src/asodesigner/features/rna_access/output
 cache/
-dist/
-.idea/
+src/cache/
+src/cache/genomes/hg38/
+cache/genomes/hg38/
+src/asodesigner/features/rna_access/output
 data/human/transcripts/ACH-001328_transcriptome.csv
+src/data/human/human_v34/dbs/
+src/data/human/human_v34/gencode.v34.annotation.gff3*
+
+dbs/
+*.db
+*.fa
+*.fa.gz
+*.gff
+*.gff.gz
+*.gtf.gz
+
+.idea/
