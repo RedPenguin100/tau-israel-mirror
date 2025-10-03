@@ -103,7 +103,7 @@ function Form({ setAsoSequences }) {
     };
 
     const fetchFromBackend = async () => {
-      const response = await fetch(`${BACKEND_URL}/gene_names`);
+      const response = await fetch(`${BACKEND_URL}/gene_names?organism_id=${encodeURIComponent(selectedOrganism)}`);
       if (!response.ok) {
         throw new Error(`Backend responded with ${response.status}`);
       }
@@ -113,16 +113,29 @@ function Form({ setAsoSequences }) {
     };
 
     const fetchFromStatic = async () => {
-      const response = await fetch(`/gene_names.txt`);
-      if (!response.ok) {
-        throw new Error(`Static file responded with ${response.status}`);
+      const candidates = [
+        `/gene_names_${selectedOrganism}.txt`,
+      ];
+
+      for (const path of candidates) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) {
+            continue;
+          }
+          const text = await response.text();
+          const names = text
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+          applyNames(names);
+          return;
+        } catch (error) {
+          console.error(`Failed to load static gene names from ${path}`, error);
+        }
       }
-      const text = await response.text();
-      const names = text
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-      applyNames(names);
+
+      throw new Error("Static gene list not found");
     };
 
     const fetchGeneNames = async () => {
@@ -151,7 +164,7 @@ function Form({ setAsoSequences }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedOrganism]);
 
   const filteredGeneNames = useMemo(() => {
     if (!geneSearchTerm.trim()) return geneNames;
@@ -214,6 +227,11 @@ function Form({ setAsoSequences }) {
                   setSelectedOrganism(selected);
                   const organism_data = ORGANISM.find((p) => p.id === selected);
                   setOrganismFile(organism_data?.file_name || "");
+                  setSelectedGene("");
+                  setGeneNames([]);
+                  setGeneNamesError("");
+                  setSequenceStatus("");
+                  setErrors([]);
                 }}
                 defaultOption={selectedOrganism}
               />

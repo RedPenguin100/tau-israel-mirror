@@ -38,15 +38,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_FOLDER = Path("uploads")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 
-GENE_NAME_CANDIDATES = [
-    BASE_DIR / "client" / "public" / "gene_names.txt",
-    BASE_DIR / "tests" / "gene_names.txt",
-]
+GENE_NAME_FILES = {
+    "human": [
+        BASE_DIR / "client" / "public" / "gene_names_human.txt",
+        BASE_DIR / "tests" / "gene_names_human.txt",
+    ],
+    "yeast": [
+        BASE_DIR / "client" / "public" / "gene_names_yeast.txt",
+        BASE_DIR / "tests" / "gene_names_yeast.txt",
+    ],
+    "E_coli": [
+        BASE_DIR / "client" / "public" / "gene_names_E_coli.txt",
+        BASE_DIR / "tests" / "gene_names_E_coli.txt",
+    ],
+    "mouse": [
+        BASE_DIR / "client" / "public" / "gene_names_mouse.txt",
+        BASE_DIR / "tests" / "gene_names_mouse.txt",
+    ],
+}
 
 
-def _resolve_gene_names_path() -> Optional[Path]:
-    for candidate in GENE_NAME_CANDIDATES:
-        if candidate.exists():
+def _resolve_gene_names_path(organism_id: str) -> Optional[Path]:
+    candidates = GENE_NAME_FILES.get(organism_id) or GENE_NAME_FILES.get("human", [])
+    for candidate in candidates:
+        if candidate and candidate.exists():
             return candidate
     return None
 
@@ -100,9 +115,9 @@ async def generate_aso(request_data: GenASORequest):
 
 
 @app.get("/gene_names")
-async def get_gene_names():
+async def get_gene_names(organism_id: str = "human"):
     try:
-        gene_path = _resolve_gene_names_path()
+        gene_path = _resolve_gene_names_path(organism_id)
         if not gene_path:
             raise HTTPException(status_code=500, detail="Gene names file not found")
 
