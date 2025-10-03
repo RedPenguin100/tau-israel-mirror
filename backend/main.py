@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from Bio import SeqIO
 from dotenv import load_dotenv
@@ -56,12 +56,12 @@ class GenASORequest(BaseModel):
     organismFile: str
     geneFile: Optional[str] = None
     geneSequence: Optional[str] = None
-    numericParams: Dict[str, Any]
-    viewASO: bool
+    top_k: int
+    includeFeatureBreakdown: bool
 
 
 # Placeholder outer function
-def foo(organismFile, geneName, geneData, numericParams, viewASO):
+def foo(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
     """
     geneName: selected gene identifier.
     geneData: nucleotide sequence or identifier supplied by the client (optional).
@@ -86,8 +86,8 @@ async def generate_aso(request_data: GenASORequest):
             request_data.organismFile,
             request_data.geneName,
             gene_data,
-            request_data.numericParams,
-            request_data.viewASO,
+            request_data.top_k,
+            request_data.includeFeatureBreakdown,
         )
 
         if "asoSequence" not in result:
@@ -166,9 +166,8 @@ async def send_processing_started_email(to: str, name: str, asoData: dict):
     gene_name = asoData.get("geneName", "N/A")
     gene_seq = asoData.get("geneSequence") or ""
     gene_preview = gene_seq[:60] + ("…" if len(gene_seq) > 60 else "")
-    numeric_params = asoData.get("numericParams", {})
-    volume = numeric_params.get("ASO_volume", "N/A")
-    period = numeric_params.get("period_of_treatment", "N/A")
+    top_k = asoData.get("top_k", "N/A")
+    include_breakdown = "Yes" if asoData.get("includeFeatureBreakdown") else "No"
 
     html = f"""
     <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -179,8 +178,8 @@ async def send_processing_started_email(to: str, name: str, asoData: dict):
         <li><strong>Organism file</strong>: {escape_html(str(organism_file))}</li>
         <li><strong>Gene name</strong>: {escape_html(str(gene_name))}</li>
         <li><strong>Gene sequence preview</strong>: <code>{escape_html(gene_preview or "N/A")}</code></li>
-        <li><strong>ASO volume</strong>: {escape_html(str(volume))}</li>
-        <li><strong>Treatment period</strong>: {escape_html(str(period))} days</li>
+        <li><strong>Top-k results</strong>: {escape_html(str(top_k))}</li>
+        <li><strong>Detailed analysis</strong>: {escape_html(include_breakdown)}</li>
       </ul>
       <p>You'll receive another email with your results once the analysis is complete.</p>
       <p style="color:#555; font-size: 12px;">This message was sent from Oncoligo ASO Generator.</p>
@@ -197,9 +196,8 @@ async def send_processing_completed_email(to: str, name: str, asoData: dict, fil
     gene_name = asoData.get("geneName", "N/A")
     gene_seq = asoData.get("geneSequence") or ""
     gene_preview = gene_seq[:60] + ("…" if len(gene_seq) > 60 else "")
-    numeric_params = asoData.get("numericParams", {})
-    volume = numeric_params.get("ASO_volume", "N/A")
-    period = numeric_params.get("period_of_treatment", "N/A")
+    top_k = asoData.get("top_k", "N/A")
+    include_breakdown = "Yes" if asoData.get("includeFeatureBreakdown") else "No"
 
     html = f"""
     <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -210,8 +208,8 @@ async def send_processing_completed_email(to: str, name: str, asoData: dict, fil
         <li><strong>Organism file</strong>: {escape_html(str(organism_file))}</li>
         <li><strong>Gene name</strong>: {escape_html(str(gene_name))}</li>
         <li><strong>Gene sequence preview</strong>: <code>{escape_html(gene_preview or "N/A")}</code></li>
-        <li><strong>ASO volume</strong>: {escape_html(str(volume))}</li>
-        <li><strong>Treatment period</strong>: {escape_html(str(period))} days</li>
+        <li><strong>Top-k results</strong>: {escape_html(str(top_k))}</li>
+        <li><strong>Detailed analysis</strong>: {escape_html(include_breakdown)}</li>
       </ul>
       <p style="color:#555; font-size: 12px;">This message was sent from Oncoligo ASO Generator.</p>
     </div>
@@ -278,8 +276,8 @@ class RunASORequest(BaseModel):
     organismFile: str
     geneFile: Optional[str] = None
     geneSequence: Optional[str] = None
-    numericParams: Dict[str, Any]
-    viewASO: bool
+    top_k: int
+    includeFeatureBreakdown: bool
     userEmail: str
     userName: str
 
@@ -291,8 +289,8 @@ def run_aso_task(request_data: RunASORequest):
             request_data.organismFile,
             request_data.geneName,
             gene_data,
-            request_data.numericParams,
-            request_data.viewASO,
+            request_data.top_k,
+            request_data.includeFeatureBreakdown,
         )
 
         # Convert ASO to FASTA
@@ -312,8 +310,8 @@ def run_aso_task(request_data: RunASORequest):
                 "organismFile": request_data.organismFile,
                 "geneFile": request_data.geneFile,
                 "geneSequence": request_data.geneSequence,
-                "numericParams": request_data.numericParams,
-                "viewASO": request_data.viewASO,
+                "top_k": request_data.top_k,
+                "includeFeatureBreakdown": request_data.includeFeatureBreakdown,
             },
             file=fasta_base64
         ))
@@ -332,8 +330,8 @@ async def run_aso(request_data: RunASORequest, background_tasks: BackgroundTasks
             "organismFile": request_data.organismFile,
             "geneFile": request_data.geneFile,
             "geneSequence": request_data.geneSequence,
-            "numericParams": request_data.numericParams,
-            "viewASO": request_data.viewASO,
+            "top_k": request_data.top_k,
+            "includeFeatureBreakdown": request_data.includeFeatureBreakdown,
         },
     )
 

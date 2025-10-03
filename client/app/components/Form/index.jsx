@@ -36,8 +36,9 @@ function Form({ setAsoSequences }) {
   const [sequenceStatus, setSequenceStatus] = useState("");
   const sequenceStatusTimer = useRef(null);
 
-  const [numericParams, setNumericParams] = useState({ ASO_volume: 50, period_of_treatment: 7 });
-  const [viewASO, setViewASO] = useState(true);
+  const [topK, setTopK] = useState('10');
+  const [includeFeatureBreakdown, setIncludeFeatureBreakdown] = useState(true);
+  const [topKHelpVisible, setTopKHelpVisible] = useState(false);
   const [errors, setErrors] = useState([]);
   const [isValid, setIsValid] = useState(true);
   const [downloadFile, setDownloadFile] = useState();
@@ -47,26 +48,26 @@ function Form({ setAsoSequences }) {
   const [showThankYou, setShowThankYou] = useState(false);
 
   const $isLoading = useStore(isLoading);
+  const topKError = errors.find((err) => err.toLowerCase().includes('top-k results'));
 
   const isFormValid = useCallback((skipGeneValidation = false) => {
-    if (!organismFile.length) return setErrors(["Please select an organism"]), false;
-    if (!skipGeneValidation && !selectedGene) return setErrors(["Please select a gene from the list"]), false;
+    const nextErrors = [];
+
+    if (!organismFile.length) nextErrors.push("Please select an organism");
+    if (!skipGeneValidation && !selectedGene) nextErrors.push("Please select a gene from the list");
 
     if (!isValidSequenceFile(organismFile)) {
-      setErrors(["Invalid organism sequence file format. Please select a valid file."]);
-      return false;
+      nextErrors.push("Invalid organism sequence file format. Please select a valid file.");
     }
 
-    for (const [key, val] of Object.entries(numericParams)) {
-      if (!(typeof val === "number" && val > 0)) {
-        setErrors([`${key} must be a positive number`]);
-        return false;
-      }
+    const parsedTopK = Number(topK);
+    if (!(Number.isInteger(parsedTopK) && parsedTopK > 0 && parsedTopK <= 100)) {
+      nextErrors.push("Top-k results must be between 1 and 100");
     }
 
-    setErrors([]);
-    return true;
-  }, [organismFile, selectedGene, numericParams]);
+    setErrors(nextErrors);
+    return nextErrors.length === 0;
+  }, [organismFile, selectedGene, topK]);
 
   const isUserInfoValid = useCallback(() => {
     if (!userInfo.name.trim()) return setErrors(["Please provide your name"]), false;
@@ -89,7 +90,7 @@ function Form({ setAsoSequences }) {
     } else {
       setIsValid(isUserInfoValid());
     }
-  }, [organismFile, numericParams, isFormValid, step, userInfo, isUserInfoValid, selectedGene]);
+  }, [organismFile, topK, isFormValid, step, userInfo, isUserInfoValid, selectedGene]);
 
   useEffect(() => {
     let isMounted = true;
@@ -166,16 +167,12 @@ function Form({ setAsoSequences }) {
     };
   }, []);
 
-  const handleNumericParamChange = (paramName, value) => {
-    setNumericParams((prev) => ({ ...prev, [paramName]: Number(value) }));
-  };
-
   const submitForm = useSubmitForm(
     selectedGene,
     organismFile,
     customGeneSequence,
-    numericParams,
-    viewASO,
+    Number(topK),
+    includeFeatureBreakdown,
     setDownloadFile,
     isFormValid,
     setErrors,
@@ -331,26 +328,49 @@ function Form({ setAsoSequences }) {
         <>
           <h2>Numeric Parameters</h2> 
           <section className={styles.numeric_params}>
-            {Object.entries(numericParams).map(([param, val]) => (
-              <label key={param}>
-                {param.replace(/_/g, " ")}:
-                <input
-                  type="number"
-                  min={0}
-                  value={val}
-                  onChange={(e) => handleNumericParamChange(param, e.target.value)}
-                />
-              </label>
-            ))}
+            <label className={styles.topKRow}>
+              <span>
+                Top-k results
+                <span
+                  className={styles.helpIcon}
+                  title="How many optimized ASOs should be displayed in your results."
+                  aria-label="How many optimized ASOs should be displayed in your results."
+                  onClick={() => setTopKHelpVisible((visible) => !visible)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setTopKHelpVisible((visible) => !visible);
+                    }
+                  }}
+                >
+                  ?
+                </span>
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={topK}
+                onChange={(e) => setTopK(e.target.value)}
+              />
+            </label>
+            {topKHelpVisible && (
+              <div className={styles.helpText}>*How many optimized ASOs should be displayed in your results.</div>
+            )}
+            {topKError && step === 3 && (
+              <div className={styles.inlineError} aria-live="polite">{topKError}</div>
+            )}
           </section>
 
           <CheckInput
             type="checkbox"
-            id="view-aso"
-            name="view-aso"
-            label="View ASO"
-            checked={viewASO}
-            onChange={(e) => setViewASO(e.target.checked)}
+            id="include-feature-breakdown"
+            name="include-feature-breakdown"
+            label="Get detailed analysis"
+            checked={includeFeatureBreakdown}
+            onChange={(e) => setIncludeFeatureBreakdown(e.target.checked)}
           />
         </>
       )}
@@ -403,7 +423,7 @@ function Form({ setAsoSequences }) {
         </>
       )}
 
-      {errors.length > 0 && step !== 2 && (
+      {errors.length > 0 && step !== 2 && !(step === 3 && errors.length === 1 && topKError) && (
         <ul className={styles.errors}>
           {errors.map((error, idx) => (
             <li key={idx}>{error}</li>
