@@ -1,7 +1,6 @@
 import base64
 import logging
 import os
-import shutil
 import time
 import uuid
 from datetime import datetime
@@ -34,12 +33,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 UPLOAD_FOLDER = Path("uploads")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 
+GENE_NAME_CANDIDATES = [
+    BASE_DIR / "client" / "public" / "gene_names.txt",
+    BASE_DIR / "tests" / "gene_names.txt",
+]
+
+
+def _resolve_gene_names_path() -> Optional[Path]:
+    for candidate in GENE_NAME_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    return None
+
 
 class GenASORequest(BaseModel):
-    geneInputType: str
+    geneName: str
     organismFile: str
     geneFile: Optional[str] = None
     geneSequence: Optional[str] = None
@@ -48,9 +61,10 @@ class GenASORequest(BaseModel):
 
 
 # Placeholder outer function
-def foo(organismFile, geneData, numericParams, viewASO):
+def foo(organismFile, geneName, geneData, numericParams, viewASO):
     """
-    geneData is either geneFile (str) or geneSequence (str) depending on geneInputType.
+    geneName: selected gene identifier.
+    geneData: nucleotide sequence or identifier supplied by the client (optional).
     This function returns a dict with 'asoSequence': list of {name, sequence}.
     """
     # Dummy implementation for testing
@@ -66,26 +80,15 @@ def foo(organismFile, geneData, numericParams, viewASO):
 @app.post("/gen_aso")
 async def generate_aso(request_data: GenASORequest):
     try:
-        if request_data.geneInputType == "Upload Gene Fasta":
-            if not request_data.geneFile:
-                return {"error": "geneFile is required for 'Upload Gene Fasta'"}
-            result = foo(
-                request_data.organismFile,
-                request_data.geneFile,
-                request_data.numericParams,
-                request_data.viewASO,
-            )
-        elif request_data.geneInputType == "Enter Gene Sequence":
-            if not request_data.geneSequence:
-                return {"error": "geneSequence is required for 'Enter Gene Sequence'"}
-            result = foo(
-                request_data.organismFile,
-                request_data.geneSequence,
-                request_data.numericParams,
-                request_data.viewASO,
-            )
-        else:
-            return {"error": f"Unsupported geneInputType: {request_data.geneInputType}"}
+        gene_data = request_data.geneSequence or request_data.geneFile or request_data.geneName
+
+        result = foo(
+            request_data.organismFile,
+            request_data.geneName,
+            gene_data,
+            request_data.numericParams,
+            request_data.viewASO,
+        )
 
         if "asoSequence" not in result:
             return {"error": "asoSequence not returned from processing"}
@@ -94,6 +97,24 @@ async def generate_aso(request_data: GenASORequest):
 
     except Exception as e:
         return {"error": f"Internal server error: {str(e)}"}
+
+
+@app.get("/gene_names")
+async def get_gene_names():
+    try:
+        gene_path = _resolve_gene_names_path()
+        if not gene_path:
+            raise HTTPException(status_code=500, detail="Gene names file not found")
+
+        with gene_path.open("r", encoding="utf-8") as handle:
+            names = [line.strip() for line in handle if line.strip()]
+
+        return {"genes": names}
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Failed to read gene names")
+        raise HTTPException(status_code=500, detail="Unable to load gene names")
 
 
 # Load environment variables
@@ -142,7 +163,8 @@ async def send_processing_started_email(to: str, name: str, asoData: dict):
     subject = "Your ASO analysis is being processed"
 
     organism_file = asoData.get("organismFile", "N/A")
-    gene_seq = asoData.get("geneSequence", "")
+    gene_name = asoData.get("geneName", "N/A")
+    gene_seq = asoData.get("geneSequence") or ""
     gene_preview = gene_seq[:60] + ("…" if len(gene_seq) > 60 else "")
     numeric_params = asoData.get("numericParams", {})
     volume = numeric_params.get("ASO_volume", "N/A")
@@ -155,6 +177,7 @@ async def send_processing_started_email(to: str, name: str, asoData: dict):
       <h3>Summary of your request</h3>
       <ul>
         <li><strong>Organism file</strong>: {escape_html(str(organism_file))}</li>
+        <li><strong>Gene name</strong>: {escape_html(str(gene_name))}</li>
         <li><strong>Gene sequence preview</strong>: <code>{escape_html(gene_preview or "N/A")}</code></li>
         <li><strong>ASO volume</strong>: {escape_html(str(volume))}</li>
         <li><strong>Treatment period</strong>: {escape_html(str(period))} days</li>
@@ -171,7 +194,8 @@ async def send_processing_completed_email(to: str, name: str, asoData: dict, fil
     subject = "Your ASO analysis is complete!"
 
     organism_file = asoData.get("organismFile", "N/A")
-    gene_seq = asoData.get("geneSequence", "")
+    gene_name = asoData.get("geneName", "N/A")
+    gene_seq = asoData.get("geneSequence") or ""
     gene_preview = gene_seq[:60] + ("…" if len(gene_seq) > 60 else "")
     numeric_params = asoData.get("numericParams", {})
     volume = numeric_params.get("ASO_volume", "N/A")
@@ -184,6 +208,7 @@ async def send_processing_completed_email(to: str, name: str, asoData: dict, fil
       <h3>Summary</h3>
       <ul>
         <li><strong>Organism file</strong>: {escape_html(str(organism_file))}</li>
+        <li><strong>Gene name</strong>: {escape_html(str(gene_name))}</li>
         <li><strong>Gene sequence preview</strong>: <code>{escape_html(gene_preview or "N/A")}</code></li>
         <li><strong>ASO volume</strong>: {escape_html(str(volume))}</li>
         <li><strong>Treatment period</strong>: {escape_html(str(period))} days</li>
@@ -249,7 +274,7 @@ from io import StringIO
 
 
 class RunASORequest(BaseModel):
-    geneInputType: str
+    geneName: str
     organismFile: str
     geneFile: Optional[str] = None
     geneSequence: Optional[str] = None
@@ -261,9 +286,10 @@ class RunASORequest(BaseModel):
 def run_aso_task(request_data: RunASORequest):
     try:
         # Generate ASO sequences (long-running)
-        gene_data = request_data.geneFile if request_data.geneInputType == "Upload Gene Fasta" else request_data.geneSequence
+        gene_data = request_data.geneSequence or request_data.geneFile or request_data.geneName
         result = foo(
             request_data.organismFile,
+            request_data.geneName,
             gene_data,
             request_data.numericParams,
             request_data.viewASO,
@@ -282,7 +308,7 @@ def run_aso_task(request_data: RunASORequest):
             to=request_data.userEmail,
             name=request_data.userName,
             asoData={
-                "geneInputType": request_data.geneInputType,
+                "geneName": request_data.geneName,
                 "organismFile": request_data.organismFile,
                 "geneFile": request_data.geneFile,
                 "geneSequence": request_data.geneSequence,
@@ -302,7 +328,7 @@ async def run_aso(request_data: RunASORequest, background_tasks: BackgroundTasks
         to=request_data.userEmail,
         name=request_data.userName,
         asoData={
-            "geneInputType": request_data.geneInputType,
+            "geneName": request_data.geneName,
             "organismFile": request_data.organismFile,
             "geneFile": request_data.geneFile,
             "geneSequence": request_data.geneSequence,

@@ -101,12 +101,11 @@ def get_locus_to_data_dict(create_db=False, include_introns=False, gene_subset=N
     locus_to_data = dict()
     locus_to_strand = dict()
 
-    basic_features = ['exon', 'intron', 'gene', 'stop_codon', 'UTR']
+    basic_features = ['exon', 'gene', 'stop_codon', 'UTR']
 
+    feature_types = basic_features.copy()
     if include_introns:
-        feature_types = basic_features.append('intron')
-    else:
-        feature_types = basic_features
+        feature_types.append('intron')
 
     for feature in db.features_of_type(feature_types, order_by='start'):
         chrom = feature.seqid

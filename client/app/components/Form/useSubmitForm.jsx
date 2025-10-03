@@ -1,13 +1,11 @@
 import { useCallback } from "react";
-import { setIsLoading } from "../../store";
-import { BACKEND_URL, EMAIL_BACKEND_URL } from "../../constants";
+import { BACKEND_URL } from "../../constants";
 import { getFastaFormat } from "../../utils";
 
 
 export const useSubmitForm = (
-  geneInputType,
+  selectedGene,
   organismFile,
-  geneFile,
   geneSequence,
   numericParams,
   viewASO,
@@ -34,9 +32,8 @@ export const useSubmitForm = (
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            geneInputType,
+            geneName: selectedGene,
             organismFile,
-            geneFile,
             geneSequence,
             numericParams,
             viewASO,
@@ -72,9 +69,8 @@ export const useSubmitForm = (
       }
     },
     [
-      geneInputType,
+      selectedGene,
       organismFile,
-      geneFile,
       geneSequence,
       numericParams,
       viewASO,

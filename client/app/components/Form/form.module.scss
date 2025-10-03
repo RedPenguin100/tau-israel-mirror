@@ -51,7 +51,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  height: 10rem;
+  height: auto;
+  justify-content: start;
+  align-items: start;
+
+  > .container {
+    width: 440px;
+    min-width: 440px;
+    max-width: 440px;
+    min-height: 220px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
   &.fasta  {
     grid-template-columns: 8fr 1fr;
@@ -62,8 +75,7 @@
   }
 }
 .container {
-  width: 500px;
-  height: 500px;
+  width: 100%;
   border: 2px solid var(--accent-dark);
   border-radius: var(--border-radius);
   height: 100%;
@@ -77,6 +89,110 @@
     filter: grayscale(100%);
     --accent-light: black;
     --accent-dark: black;
+  }
+}
+
+.geneListWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.geneSearch {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.geneList {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.geneListItem {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  &:hover {
+    border-color: var(--accent-dark);
+    background: var(--accent-light, rgba(0, 0, 0, 0.05));
+  }
+}
+
+.geneListItemSelected {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+  color: white;
+}
+
+.geneListError {
+  color: var(--error-color, #c0392b);
+}
+
+.selectedGene {
+  font-size: 0.9rem;
+  color: var(--accent-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sequenceStatus {
+  font-size: 0.85rem;
+}
+
+.sequenceStatusLoading {
+  color: var(--accent-dark);
+}
+
+.sequenceStatusLoaded {
+  color: #2e7d32;
+}
+
+.sequenceStatusCustom {
+  color: #1565c0;
+}
+
+.inlineErrors {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--error-color, #c0392b);
+  font-size: 0.9rem;
+}
+
+.inlineErrorItem {
+  display: inline-block;
+}
+
+.clearOverride {
+  margin-left: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--accent-dark);
+
+  &:hover {
+    background: var(--accent-light, rgba(0, 0, 0, 0.05));
   }
 }
 
@@ -129,7 +245,7 @@
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  margin-top: 4rem;
+  margin-top: 2rem;
 }
 
 .btn {
