@@ -8,7 +8,6 @@ const nextConfig = {
   },
   output: "export",
   assetPrefix: process.env.ASSET_PREFIX || "",
-  backendURL: process.env.BACKEND_URL || "",
 };
 
 module.exports = nextConfig;
