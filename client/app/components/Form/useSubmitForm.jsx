@@ -11,18 +11,22 @@ export const useSubmitForm = (
   includeFeatureBreakdown,
   setDownloadFile,
   isFormValid,
+  isUserInfoValid,
   setErrors,
   setAsoSequences,
   userInfo,
   setShowThankYou,
-  setIsProcessing
+  setIsProcessing,
+  setAttemptedSubmit
 ) => {
   return useCallback(
-    async (event) => {
-      event.preventDefault();
+    async () => {
+      setAttemptedSubmit(true);
       setDownloadFile(undefined);
 
-      if (!isFormValid()) return;
+      const baseValid = isFormValid();
+      const contactValid = isUserInfoValid();
+      if (!baseValid || !contactValid) return;
 
       setIsProcessing(true);
 
@@ -76,11 +80,13 @@ export const useSubmitForm = (
       includeFeatureBreakdown,
       setDownloadFile,
       isFormValid,
+      isUserInfoValid,
       setErrors,
       setAsoSequences,
       userInfo,
       setShowThankYou,
       setIsProcessing,
+      setAttemptedSubmit,
     ]
   );
 };

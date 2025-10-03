@@ -178,9 +178,11 @@
 }
 
 .inlineError {
-  margin-top: 0.5rem;
+  margin-top: 4px;
+  margin-bottom: 0;
   color: var(--error-color, #c0392b);
-  font-size: 0.85rem;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .inlineErrorItem {

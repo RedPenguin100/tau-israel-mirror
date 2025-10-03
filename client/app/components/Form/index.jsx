@@ -46,6 +46,7 @@ function Form({ setAsoSequences }) {
   const [userInfo, setUserInfo] = useState({ name: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const $isLoading = useStore(isLoading);
   const topKError = errors.find((err) => err.toLowerCase().includes('top-k results'));
@@ -175,16 +176,32 @@ function Form({ setAsoSequences }) {
     includeFeatureBreakdown,
     setDownloadFile,
     isFormValid,
+    isUserInfoValid,
     setErrors,
     setAsoSequences,
     userInfo,
     setShowThankYou,
-    setIsProcessing
+    setIsProcessing,
+    setAttemptedSubmit
   );
+
+  const handleSubmit = useCallback(
+    (event) => {
+      event.preventDefault();
+      submitForm();
+    },
+    [submitForm]
+  );
+
+  useEffect(() => {
+    if (step !== 4 && attemptedSubmit) {
+      setAttemptedSubmit(false);
+    }
+  }, [step, attemptedSubmit]);
 
 
   return (
-    <form onSubmit={submitForm} className={styles.form}>
+    <form onSubmit={handleSubmit} className={styles.form}>
       {step === 1 && (
         <>
           <h2>Organism Input</h2> 
@@ -423,7 +440,7 @@ function Form({ setAsoSequences }) {
         </>
       )}
 
-      {errors.length > 0 && step !== 2 && !(step === 3 && errors.length === 1 && topKError) && (
+      {errors.length > 0 && step !== 2 && !(step === 3 && errors.length === 1 && topKError) && (step !== 4 || attemptedSubmit) && (
         <ul className={styles.errors}>
           {errors.map((error, idx) => (
             <li key={idx}>{error}</li>
@@ -467,7 +484,7 @@ function Form({ setAsoSequences }) {
         {step === 4 && !showThankYou && (
           <button
             className={`${styles.btn} ${styles.run_btn}`}
-            disabled={!isValid || isProcessing}
+            disabled={isProcessing}
             type="submit"
           >
             {isProcessing ? (
