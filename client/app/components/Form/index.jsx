@@ -4,12 +4,20 @@ import FastaUploader from "../FastaUploader";
 import styles from "./form.module.scss";
 import CheckInput from "../CheckInput";
 import RadioInput from "../RadioInput";
-import { BACKEND_URL } from "../../constants";
-
 import ORGANISM from "../../data/organism";
 import { isLoading } from "../../store";
 import { useStore } from "@nanostores/react";
 import { useSubmitForm } from "./useSubmitForm";
+
+const SEQUENCE_MODES = [
+  { id: "geneList", label: "Select Gene" },
+  { id: "upload", label: "Upload Gene FASTA" },
+  { id: "paste", label: "Enter Gene Sequence" },
+];
+
+const INVALID_SEQUENCE_ERROR = "Only A, T, C, G are allowed when entering a gene sequence";
+const MAX_SEQUENCE_LENGTH = 2_000_000;
+const SEQUENCE_LENGTH_ERROR = "Gene sequence must be fewer than 2,000,000 nucleotides";
 
 function isValidSequenceFile(filename) {
   const extension = filename.split('.').pop()?.toLowerCase();
@@ -34,6 +42,7 @@ function Form({ setAsoSequences }) {
   const [geneNamesError, setGeneNamesError] = useState("");
   const [isFetchingSequence, setIsFetchingSequence] = useState(false);
   const [sequenceStatus, setSequenceStatus] = useState("");
+  const [sequenceInputMode, setSequenceInputMode] = useState("geneList");
   const sequenceStatusTimer = useRef(null);
 
   const [topK, setTopK] = useState('10');
@@ -47,28 +56,60 @@ function Form({ setAsoSequences }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [geneValidationAttempted, setGeneValidationAttempted] = useState(false);
+  const [hasInvalidSequenceChars, setHasInvalidSequenceChars] = useState(false);
+  const [hasSequenceLengthError, setHasSequenceLengthError] = useState(false);
 
   const $isLoading = useStore(isLoading);
   const topKError = errors.find((err) => err.toLowerCase().includes('top-k results'));
 
-  const isFormValid = useCallback((skipGeneValidation = false) => {
-    const nextErrors = [];
+  const isFormValid = useCallback(
+    (skipGeneValidation = false) => {
+      const nextErrors = [];
 
-    if (!organismFile.length) nextErrors.push("Please select an organism");
-    if (!skipGeneValidation && !selectedGene) nextErrors.push("Please select a gene from the list");
+      if (!organismFile.length) {
+        nextErrors.push("Please select an organism");
+      }
 
-    if (!isValidSequenceFile(organismFile)) {
-      nextErrors.push("Invalid organism sequence file format. Please select a valid file.");
-    }
+      if (!isValidSequenceFile(organismFile)) {
+        nextErrors.push("Invalid organism sequence file format. Please select a valid file.");
+      }
 
-    const parsedTopK = Number(topK);
-    if (!(Number.isInteger(parsedTopK) && parsedTopK > 0 && parsedTopK <= 100)) {
-      nextErrors.push("Top-k results must be between 1 and 100");
-    }
+      const parsedTopK = Number(topK);
+      if (!(Number.isInteger(parsedTopK) && parsedTopK > 0 && parsedTopK <= 100)) {
+        nextErrors.push("Top-k results must be between 1 and 100");
+      }
 
-    setErrors(nextErrors);
-    return nextErrors.length === 0;
-  }, [organismFile, selectedGene, topK]);
+      if (!skipGeneValidation) {
+        const hasSequenceInput =
+          sequenceInputMode === "geneList"
+            ? Boolean(selectedGene)
+            : customGeneSequence.replace(/\s/g, "").length > 0;
+
+        if (!hasSequenceInput) {
+          nextErrors.push("Please select a gene or provide a sequence");
+        }
+      }
+
+      if (hasInvalidSequenceChars && sequenceInputMode !== "geneList") {
+        if (!nextErrors.includes(INVALID_SEQUENCE_ERROR)) {
+          nextErrors.push(INVALID_SEQUENCE_ERROR);
+        }
+      }
+
+      setErrors(nextErrors);
+      return nextErrors.length === 0;
+    },
+    [
+      organismFile,
+      selectedGene,
+      topK,
+      sequenceInputMode,
+      customGeneSequence,
+      hasInvalidSequenceChars,
+      hasSequenceLengthError,
+    ]
+  );
 
   const isUserInfoValid = useCallback(() => {
     if (!userInfo.name.trim()) return setErrors(["Please provide your name"]), false;
@@ -86,71 +127,48 @@ function Form({ setAsoSequences }) {
 
   useEffect(() => {
     if (step <= 3) {
-      const skipGeneValidation = step < 2;
+      const skipGeneValidation =
+        step < 2 || (step === 2 && !geneValidationAttempted);
       setIsValid(isFormValid(skipGeneValidation));
     } else {
       setIsValid(isUserInfoValid());
     }
-  }, [organismFile, topK, isFormValid, step, userInfo, isUserInfoValid, selectedGene]);
+  }, [
+    organismFile,
+    topK,
+    isFormValid,
+    step,
+    userInfo,
+    isUserInfoValid,
+    geneValidationAttempted,
+    hasInvalidSequenceChars,
+    hasSequenceLengthError,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const applyNames = (names) => {
-      if (!isMounted) return;
-      setGeneNames(names);
-      setGeneNamesError(names.length ? "" : "No gene names available");
-    };
-
-    const fetchFromBackend = async () => {
-      const response = await fetch(`${BACKEND_URL}/gene_names?organism_id=${encodeURIComponent(selectedOrganism)}`);
-      if (!response.ok) {
-        throw new Error(`Backend responded with ${response.status}`);
-      }
-      const payload = await response.json();
-      const names = Array.isArray(payload?.genes) ? payload.genes : [];
-      applyNames(names);
-    };
-
-    const fetchFromStatic = async () => {
-      const candidates = [
-        `/gene_names_${selectedOrganism}.txt`,
-      ];
-
-      for (const path of candidates) {
-        try {
-          const response = await fetch(path);
-          if (!response.ok) {
-            continue;
-          }
-          const text = await response.text();
-          const names = text
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean);
-          applyNames(names);
-          return;
-        } catch (error) {
-          console.error(`Failed to load static gene names from ${path}`, error);
-        }
-      }
-
-      throw new Error("Static gene list not found");
-    };
-
     const fetchGeneNames = async () => {
       setGeneNamesLoading(true);
       try {
-        await fetchFromBackend();
-      } catch (backendError) {
-        console.error("Failed to load gene names from backend", backendError);
-        try {
-          await fetchFromStatic();
-        } catch (staticError) {
-          console.error("Failed to load gene names from static fallback", staticError);
-          if (isMounted) {
-            setGeneNamesError("Failed to load gene list. Please refresh the page or try again later.");
-          }
+        const response = await fetch(`/gene_names_${selectedOrganism}.txt`);
+        if (!response.ok) {
+          throw new Error(`Static gene list responded with ${response.status}`);
+        }
+        const text = await response.text();
+        const names = text
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (!isMounted) return;
+        setGeneNames(names);
+        setGeneNamesError(names.length ? "" : "No gene names available");
+      } catch (error) {
+        console.error("Failed to load gene names", error);
+        if (isMounted) {
+          setGeneNames([]);
+          setGeneNamesError("Failed to load gene list. Please refresh the page or try again later.");
         }
       } finally {
         if (isMounted) {
@@ -172,6 +190,88 @@ function Form({ setAsoSequences }) {
     return geneNames.filter((name) => name.toLowerCase().startsWith(lowered));
   }, [geneNames, geneSearchTerm]);
 
+  const customSequenceLength = useMemo(
+    () => customGeneSequence.length,
+    [customGeneSequence]
+  );
+
+  const activeSequenceIndex = useMemo(() => {
+    const idx = SEQUENCE_MODES.findIndex((mode) => mode.id === sequenceInputMode);
+    return idx >= 0 ? idx : 0;
+  }, [sequenceInputMode]);
+
+  const sequenceSliderStyle = useMemo(() => {
+    const width = 100 / SEQUENCE_MODES.length;
+    return {
+      width: `calc(${width}% - 4px)`,
+      left: `calc(${activeSequenceIndex * width}% + 2px)`,
+    };
+  }, [activeSequenceIndex]);
+
+  const handleSequenceModeChange = useCallback(
+    (mode) => {
+      if (mode === sequenceInputMode) return;
+      if (sequenceStatusTimer.current) {
+        clearTimeout(sequenceStatusTimer.current);
+        sequenceStatusTimer.current = null;
+      }
+
+      if (mode === "geneList") {
+        setCustomGeneSequence("");
+        setCustomGeneFileName("");
+        setSequenceStatus("");
+      } else {
+        setSelectedGene("");
+        setCustomGeneSequence("");
+        setCustomGeneFileName("");
+        setSequenceStatus("");
+      }
+
+      setSequenceInputMode(mode);
+      setIsFetchingSequence(false);
+      setErrors([]);
+      setGeneValidationAttempted(false);
+      setHasInvalidSequenceChars(false);
+      setHasSequenceLengthError(false);
+    },
+    [sequenceInputMode]
+  );
+
+  const handleCustomSequenceChange = useCallback((value) => {
+    if (sequenceStatusTimer.current) {
+      clearTimeout(sequenceStatusTimer.current);
+      sequenceStatusTimer.current = null;
+    }
+    const raw = value.toString().toUpperCase();
+    const withoutWhitespace = raw.replace(/\s+/g, "");
+    const sanitized = withoutWhitespace.replace(/[^ACGT]/g, "");
+    const hasInvalidChars = sanitized.length !== withoutWhitespace.length;
+    const exceedsLength = sanitized.length > MAX_SEQUENCE_LENGTH;
+    const truncated = exceedsLength
+      ? sanitized.slice(0, MAX_SEQUENCE_LENGTH)
+      : sanitized;
+      setCustomGeneSequence(truncated);
+      setCustomGeneFileName("");
+      setSelectedGene("");
+      setIsFetchingSequence(false);
+      setSequenceStatus("");
+      setHasInvalidSequenceChars(hasInvalidChars);
+    setHasSequenceLengthError(exceedsLength && sequenceInputMode !== "geneList");
+  }, []);
+
+  const clearCustomSequence = useCallback(() => {
+    if (sequenceStatusTimer.current) {
+      clearTimeout(sequenceStatusTimer.current);
+      sequenceStatusTimer.current = null;
+    }
+    setCustomGeneSequence("");
+    setCustomGeneFileName("");
+    setIsFetchingSequence(false);
+    setSequenceStatus(sequenceInputMode === "geneList" && selectedGene ? "Sequence loaded" : "");
+    setHasInvalidSequenceChars(false);
+    setHasSequenceLengthError(false);
+  }, [sequenceInputMode, selectedGene]);
+
   useEffect(() => {
     return () => {
       if (sequenceStatusTimer.current) {
@@ -181,10 +281,17 @@ function Form({ setAsoSequences }) {
     };
   }, []);
 
+  const geneNameForSubmit =
+    sequenceInputMode === "geneList"
+      ? selectedGene
+      : selectedGene || customGeneFileName || "Custom Sequence";
+
+  const geneSequenceForSubmit = sequenceInputMode === "geneList" ? "" : customGeneSequence;
+
   const submitForm = useSubmitForm(
-    selectedGene,
+    geneNameForSubmit,
     organismFile,
-    customGeneSequence,
+    geneSequenceForSubmit,
     Number(topK),
     includeFeatureBreakdown,
     setDownloadFile,
@@ -205,6 +312,17 @@ function Form({ setAsoSequences }) {
     },
     [submitForm]
   );
+
+  const handleNextStep = useCallback(() => {
+    if (step === 2) {
+      setGeneValidationAttempted(true);
+      if (!isFormValid(false)) {
+        return;
+      }
+      setGeneValidationAttempted(false);
+    }
+    setStep((s) => s + 1);
+  }, [step, isFormValid]);
 
   useEffect(() => {
     if (step !== 4 && attemptedSubmit) {
@@ -230,6 +348,17 @@ function Form({ setAsoSequences }) {
                   setSelectedGene("");
                   setGeneNames([]);
                   setGeneNamesError("");
+                  setSequenceInputMode("geneList");
+                  setGeneValidationAttempted(false);
+                  setHasInvalidSequenceChars(false);
+                  setHasSequenceLengthError(false);
+                  if (sequenceStatusTimer.current) {
+                    clearTimeout(sequenceStatusTimer.current);
+                    sequenceStatusTimer.current = null;
+                  }
+                  setCustomGeneSequence("");
+                  setCustomGeneFileName("");
+                  setIsFetchingSequence(false);
                   setSequenceStatus("");
                   setErrors([]);
                 }}
@@ -242,120 +371,190 @@ function Form({ setAsoSequences }) {
 
       {step === 2 && (
         <>
-          <h2>Gene Input</h2> 
-          <section className={styles.sequence_input_2}>
-            <div className={styles.container}>
-              <div className={styles.geneListWrapper}>
-                <input
-                  type="text"
-                  value={geneSearchTerm}
-                  onChange={(event) => setGeneSearchTerm(event.target.value)}
-                  placeholder="Search gene"
-                  className={styles.geneSearch}
-                />
-                <div className={styles.geneList}>
-                  {geneNamesLoading && <p>Loading gene names…</p>}
-                  {!geneNamesLoading && geneNamesError && <p className={styles.geneListError}>{geneNamesError}</p>}
-                  {!geneNamesLoading && !geneNamesError && filteredGeneNames.length === 0 && (
-                    <p>No genes match the current search.</p>
-                  )}
-                  {!geneNamesLoading && !geneNamesError && filteredGeneNames.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      className={`${styles.geneListItem} ${selectedGene === name ? styles.geneListItemSelected : ""}`}
+          <h2>Gene Input</h2>
+          <div
+            className={styles.sequenceTabs}
+            role="tablist"
+            aria-label="Gene input method"
+          >
+            <span
+              className={styles.sequenceTabsTrack}
+              aria-hidden="true"
+              style={sequenceSliderStyle}
+            />
+            {SEQUENCE_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                role="tab"
+                aria-selected={sequenceInputMode === mode.id}
+                className={`${styles.sequenceTab} ${
+                  sequenceInputMode === mode.id ? styles.sequenceTabActive : ""
+                }`}
+                onClick={() => handleSequenceModeChange(mode.id)}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+
+          {sequenceInputMode === "geneList" && (
+            <section className={`${styles.sequence_input_2} ${styles.sequenceInputGeneList}`}>
+              <div className={styles.container}>
+                <div className={styles.geneListWrapper}>
+                  <input
+                    type="text"
+                    value={geneSearchTerm}
+                    onChange={(event) => setGeneSearchTerm(event.target.value)}
+                    placeholder="Search gene"
+                    className={styles.geneSearch}
+                  />
+                  <div className={styles.geneList}>
+                    {geneNamesLoading && <p>Loading gene names…</p>}
+                    {!geneNamesLoading && geneNamesError && <p className={styles.geneListError}>{geneNamesError}</p>}
+                    {!geneNamesLoading && !geneNamesError && filteredGeneNames.length === 0 && (
+                      <p>No genes match the current search.</p>
+                    )}
+                    {!geneNamesLoading && !geneNamesError && filteredGeneNames.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className={`${styles.geneListItem} ${selectedGene === name ? styles.geneListItemSelected : ""}`}
                       onClick={() => {
                         setSelectedGene(name);
                         setCustomGeneSequence("");
                         setCustomGeneFileName("");
+                        setHasInvalidSequenceChars(false);
+                        setHasSequenceLengthError(false);
                         setErrors([]);
                         if (sequenceStatusTimer.current) {
                           clearTimeout(sequenceStatusTimer.current);
                           sequenceStatusTimer.current = null;
                         }
-                        setIsFetchingSequence(true);
-                        setSequenceStatus("Loading sequence…");
-                        sequenceStatusTimer.current = setTimeout(() => {
-                          setIsFetchingSequence(false);
-                          setSequenceStatus("Sequence loaded");
-                          sequenceStatusTimer.current = null;
-                        }, 800);
-                      }}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
-                {selectedGene && (
-                  <div className={styles.selectedGene}>
-                    Selected gene: <strong>{selectedGene}</strong>
-                    {sequenceStatus && (
-                      <span
-                        className={`${styles.sequenceStatus} ${
-                          isFetchingSequence
-                            ? styles.sequenceStatusLoading
-                            : customGeneSequence
-                              ? styles.sequenceStatusCustom
-                              : styles.sequenceStatusLoaded
-                        }`}
+                          setIsFetchingSequence(true);
+                          setSequenceStatus("Loading sequence…");
+                          sequenceStatusTimer.current = setTimeout(() => {
+                            setIsFetchingSequence(false);
+                            setSequenceStatus("Sequence loaded");
+                            sequenceStatusTimer.current = null;
+                          }, 800);
+                        }}
                       >
-                        {sequenceStatus}
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedGene && (
+                    <div className={styles.selectedGene}>
+                      Selected gene: <strong>{selectedGene}</strong>
+                      {sequenceStatus && (
+                        <span
+                          className={`${styles.sequenceStatus} ${
+                            isFetchingSequence
+                              ? styles.sequenceStatusLoading
+                              : customGeneSequence
+                                ? styles.sequenceStatusCustom
+                                : styles.sequenceStatusLoaded
+                          }`}
+                        >
+                          {sequenceStatus}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {sequenceInputMode === "upload" && (
+            <section className={`${styles.sequence_input_2} ${styles.sequenceInputSingle}`}>
+              <div className={styles.container}>
+                <FastaUploader
+                  setName={setCustomGeneFileName}
+                  setSequence={(sequence) => {
+                    if (sequenceStatusTimer.current) {
+                      clearTimeout(sequenceStatusTimer.current);
+                      sequenceStatusTimer.current = null;
+                    }
+                    const raw = sequence.toString().toUpperCase();
+                    const withoutWhitespace = raw.replace(/\s+/g, "");
+                    const sanitized = withoutWhitespace.replace(/[^ACGT]/g, "");
+                    const hasInvalidChars = sanitized.length !== withoutWhitespace.length;
+                    const exceedsLength = sanitized.length > MAX_SEQUENCE_LENGTH;
+                    const truncated = exceedsLength
+                      ? sanitized.slice(0, MAX_SEQUENCE_LENGTH)
+                      : sanitized;
+                    setCustomGeneSequence(truncated);
+                    setSelectedGene("");
+                    setIsFetchingSequence(false);
+                    setSequenceStatus(truncated ? "Custom sequence loaded" : "");
+                    setHasInvalidSequenceChars(hasInvalidChars);
+                    setHasSequenceLengthError(exceedsLength);
+                    setErrors([]);
+                  }}
+                  clearFileAfterUpload
+                />
+                {customSequenceLength > 0 && (
+                  <div className={styles.sequenceMeta}>
+                    Using uploaded sequence{customGeneFileName ? ` (${customGeneFileName})` : ""} – {customSequenceLength} nt
+                    {hasSequenceLengthError && (
+                      <span className={styles.sequenceMetaWarning}>
+                        Maximum length is {MAX_SEQUENCE_LENGTH.toLocaleString()} nt.
                       </span>
                     )}
-                  </div>
-                )}
-                {step === 2 && errors.length > 0 && (
-                  <div className={styles.inlineErrors}>
-                    {errors.map((error, index) => (
-                      <span key={index} className={styles.inlineErrorItem}>{error}</span>
-                    ))}
+                    <button
+                      type="button"
+                      className={styles.clearOverride}
+                      onClick={clearCustomSequence}
+                    >
+                      Clear sequence
+                    </button>
                   </div>
                 )}
               </div>
-            </div>
-            <div className={styles.container}>
-              <FastaUploader
-                setName={setCustomGeneFileName}
-                setSequence={(sequence) => {
-                  if (sequenceStatusTimer.current) {
-                    clearTimeout(sequenceStatusTimer.current);
-                    sequenceStatusTimer.current = null;
-                  }
-                  setCustomGeneSequence(sequence);
-                  setIsFetchingSequence(false);
-                  setSequenceStatus(sequence ? "Custom sequence loaded" : "");
-                  setErrors([]);
-                }}
-                clearFileAfterUpload
-              />
-              {(customGeneFileName || customGeneSequence) && (
-                <div className={styles.selectedGene}>
-                  Using uploaded sequence{customGeneFileName ? ` (${customGeneFileName})` : ""} – {customGeneSequence.length} nt
-                  <button
-                    type="button"
-                    className={styles.clearOverride}
-                    onClick={() => {
-                      setCustomGeneSequence("");
-                      setCustomGeneFileName("");
-                      if (sequenceStatusTimer.current) {
-                        clearTimeout(sequenceStatusTimer.current);
-                        sequenceStatusTimer.current = null;
-                      }
-                      setIsFetchingSequence(false);
-                      if (selectedGene) {
-                        setSequenceStatus("Sequence loaded");
-                      } else {
-                        setSequenceStatus("");
-                      }
-                      setErrors([]);
-                    }}
-                  >
-                    Use selected gene only
-                  </button>
+            </section>
+          )}
+
+          {sequenceInputMode === "paste" && (
+            <section className={`${styles.sequence_input_2} ${styles.sequenceInputSingle}`}>
+              <div className={`${styles.container} ${styles.sequenceTextareaContainer}`}>
+                <textarea
+                  className={styles.sequenceTextarea}
+                  placeholder="AGCCGGTTAACCGGATTAACCGGAGAGCGTTAACCGGATTAACCGGAGCTA..."
+                  value={customGeneSequence}
+                  onChange={(event) => handleCustomSequenceChange(event.target.value)}
+                />
+                <div className={styles.sequenceMeta}>
+                  {customSequenceLength > 0
+                    ? `Sequence length: ${customSequenceLength} nt`
+                    : "Paste a nucleotide sequence to use it."}
+                  {hasSequenceLengthError && (
+                    <span className={styles.sequenceMetaWarning}>
+                      Maximum length is {MAX_SEQUENCE_LENGTH.toLocaleString()} nt.
+                    </span>
+                  )}
+                  {customSequenceLength > 0 && (
+                    <button
+                      type="button"
+                      className={styles.clearOverride}
+                      onClick={clearCustomSequence}
+                    >
+                      Clear sequence
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
+            </section>
+          )}
+
+          {errors.length > 0 && (
+            <div className={styles.inlineErrors}>
+              {errors.map((error, index) => (
+                <span key={index} className={styles.inlineErrorItem}>{error}</span>
+              ))}
             </div>
-          </section>
+          )}
         </>
       )}
 
@@ -471,7 +670,13 @@ function Form({ setAsoSequences }) {
           <button
             type="button"
             className={styles.btn}
-            onClick={() => setStep((s) => s - 1)}
+            onClick={() => {
+              setGeneValidationAttempted(false);
+              setHasInvalidSequenceChars(false);
+              setHasSequenceLengthError(false);
+              setErrors([]);
+              setStep((s) => Math.max(1, s - 1));
+            }}
           >
             Back
           </button>
@@ -481,7 +686,7 @@ function Form({ setAsoSequences }) {
           <button
             type="button"
             className={styles.btn}
-            onClick={() => setStep((s) => s + 1)}
+            onClick={handleNextStep}
           >
             Next
           </button>

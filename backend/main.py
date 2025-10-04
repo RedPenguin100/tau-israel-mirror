@@ -38,34 +38,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_FOLDER = Path("uploads")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 
-GENE_NAME_FILES = {
-    "human": [
-        BASE_DIR / "client" / "public" / "gene_names_human.txt",
-        BASE_DIR / "tests" / "gene_names_human.txt",
-    ],
-    "yeast": [
-        BASE_DIR / "client" / "public" / "gene_names_yeast.txt",
-        BASE_DIR / "tests" / "gene_names_yeast.txt",
-    ],
-    "E_coli": [
-        BASE_DIR / "client" / "public" / "gene_names_E_coli.txt",
-        BASE_DIR / "tests" / "gene_names_E_coli.txt",
-    ],
-    "mouse": [
-        BASE_DIR / "client" / "public" / "gene_names_mouse.txt",
-        BASE_DIR / "tests" / "gene_names_mouse.txt",
-    ],
-}
-
-
-def _resolve_gene_names_path(organism_id: str) -> Optional[Path]:
-    candidates = GENE_NAME_FILES.get(organism_id) or GENE_NAME_FILES.get("human", [])
-    for candidate in candidates:
-        if candidate and candidate.exists():
-            return candidate
-    return None
-
-
 class GenASORequest(BaseModel):
     geneName: str
     organismFile: str
@@ -112,26 +84,6 @@ async def generate_aso(request_data: GenASORequest):
 
     except Exception as e:
         return {"error": f"Internal server error: {str(e)}"}
-
-
-@app.get("/gene_names")
-async def get_gene_names(organism_id: str = "human"):
-    try:
-        gene_path = _resolve_gene_names_path(organism_id)
-        if not gene_path:
-            raise HTTPException(status_code=500, detail="Gene names file not found")
-
-        with gene_path.open("r", encoding="utf-8") as handle:
-            names = [line.strip() for line in handle if line.strip()]
-
-        return {"genes": names}
-    except HTTPException:
-        raise
-    except Exception:
-        logging.exception("Failed to read gene names")
-        raise HTTPException(status_code=500, detail="Unable to load gene names")
-
-
 # Load environment variables
 load_dotenv(".env.local")
 

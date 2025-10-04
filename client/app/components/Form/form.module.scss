@@ -26,8 +26,53 @@
   width: 100%;          // ensure it fully stretches
 }
 
-.sequence_input_tabs {
-  margin: auto;
+.sequenceTabs {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 660px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #dbe8f5;
+  margin: 0 auto 1rem;
+}
+
+.sequenceTab {
+  flex: none;
+  width: calc(100% / 3);
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--accent-dark);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.sequenceTab:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.sequenceTabActive {
+  color: #fff;
+}
+
+.sequenceTab:hover:not(.sequenceTabActive) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sequenceTabsTrack {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: var(--border-radius);
+  background: var(--accent-dark);
+  transition: left 0.25s ease, width 0.25s ease;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .sequence_input_1 {
@@ -73,6 +118,64 @@
   &.sequence{
     grid-template-columns: 1fr 8fr ;
   }
+}
+
+.sequenceInputGeneList,
+.sequenceInputSingle {
+  grid-template-columns: 1fr;
+  justify-content: center;
+
+  > .container {
+    width: 660px;
+    min-width: 660px;
+    max-width: 660px;
+    min-height: 320px;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.sequenceTextareaContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.sequenceTextarea {
+  width: 100%;
+  flex: 1;
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  resize: none;
+  box-sizing: border-box;
+  background: #fff;
+  color: inherit;
+}
+
+.sequenceTextarea:focus {
+  outline: none;
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(56, 118, 192, 0.2);
+}
+
+.sequenceMeta {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--accent-dark);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.sequenceMetaWarning {
+  color: var(--error-color, #c0392b);
+  font-weight: 600;
+  white-space: nowrap;
 }
 .container {
   width: 100%;
