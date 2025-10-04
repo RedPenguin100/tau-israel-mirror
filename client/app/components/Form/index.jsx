@@ -8,6 +8,10 @@ import ORGANISM from "../../data/organism";
 import { isLoading } from "../../store";
 import { useStore } from "@nanostores/react";
 import { useSubmitForm } from "./useSubmitForm";
+import humanGenes from "../../data/genes_lst/human";
+import yeastGenes from "../../data/genes_lst/yeast";
+import ecoliGenes from "../../data/genes_lst/ecoli";
+import mouseGenes from "../../data/genes_lst/mouse";
 
 const SEQUENCE_MODES = [
   { id: "geneList", label: "Select Gene" },
@@ -148,18 +152,19 @@ function Form({ setAsoSequences }) {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchGeneNames = async () => {
+
+
+    const geneLists = {
+      human: humanGenes,
+      yeast: yeastGenes,
+      E_coli: ecoliGenes,
+      mouse: mouseGenes,
+    };
+
+    const fetchGeneNames = () => {
       setGeneNamesLoading(true);
       try {
-        const response = await fetch(`/gene_names_${selectedOrganism}.txt`);
-        if (!response.ok) {
-          throw new Error(`Static gene list responded with ${response.status}`);
-        }
-        const text = await response.text();
-        const names = text
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean);
+        const names = geneLists[selectedOrganism] || [];
 
         if (!isMounted) return;
         setGeneNames(names);
@@ -168,7 +173,7 @@ function Form({ setAsoSequences }) {
         console.error("Failed to load gene names", error);
         if (isMounted) {
           setGeneNames([]);
-          setGeneNamesError("Failed to load gene list. Please refresh the page or try again later.");
+          setGeneNamesError("Failed to load gene list.");
         }
       } finally {
         if (isMounted) {
@@ -176,6 +181,7 @@ function Form({ setAsoSequences }) {
         }
       }
     };
+
 
     fetchGeneNames();
 
