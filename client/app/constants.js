@@ -2,5 +2,5 @@
 const IS_LOCAL = process.env.NODE_ENV === "development";
 export const BACKEND_URL = IS_LOCAL
   ? "http://localhost:8000"      // local backend
-  : "https://backend-igem.onrender.com";
+  : "https://backend-igem-1.onrender.com";
  // production backend
