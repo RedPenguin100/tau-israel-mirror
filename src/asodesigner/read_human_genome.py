@@ -3,7 +3,7 @@ from pathlib import Path
 
 import gffutils
 
-from .consts import HUMAN_GFF, HUMAN_DB_BASIC_INTRONS, HUMAN_DB_BASIC_INTRONS_GZ
+from .consts import HUMAN_GTF, HUMAN_DB_BASIC_INTRONS, HUMAN_DB_BASIC_INTRONS_GZ
 from .genome_file_utils import read_human_genome_fasta_dict
 from .LocusInfo import LocusInfo
 from .timer import Timer
@@ -22,7 +22,7 @@ def cond_print(text, verbose=False):
 
 def create_human_genome_db(path: Path, create_introns=False):
     print("Creating human genome database. WARNING - this is slow!")
-    total_bytes = HUMAN_GFF.stat().st_size if HUMAN_GFF.is_file() else None
+    total_bytes = HUMAN_GTF.stat().st_size if HUMAN_GTF.is_file() else None
     stop_event = threading.Event()
 
     def _monitor():
@@ -63,7 +63,7 @@ def create_human_genome_db(path: Path, create_introns=False):
 
     try:
         with Timer() as t:
-            db = gffutils.create_db(str(HUMAN_GFF), dbfn=str(path), force=True, keep_order=True,
+            db = gffutils.create_db(str(HUMAN_GTF), dbfn=str(path), force=True, keep_order=True,
                                     merge_strategy='merge', sort_attribute_values=True)
             if create_introns:
                 db.update(list(db.create_introns()))

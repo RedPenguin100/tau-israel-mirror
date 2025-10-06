@@ -5,3 +5,4 @@ biopython
 aiosmtplib
 python-dotenv
 python-multipart
+mega.py

@@ -19,5 +19,8 @@ gget==0.29.3
 fuzzysearch==0.7.3
 tqdm==4.67.1
 
+# Cloud integration
+mega.py==1.0.8
+
 # Multiprocessing variant (distinct from stdlib 'multiprocessing')
 multiprocess==0.70.18

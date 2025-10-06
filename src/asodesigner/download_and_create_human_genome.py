@@ -13,14 +13,15 @@ if __package__ in (None, ""):
     PACKAGE_ROOT = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(PACKAGE_ROOT))
     from asodesigner.read_human_genome import get_locus_to_data_dict
-    from asodesigner.consts import HUMAN_GFF, HUMAN_GFF_GZ, HUMAN_DB_BASIC_INTRONS
+    from asodesigner.consts import HUMAN_GTF, HUMAN_GTF_GZ, HUMAN_DB_BASIC_INTRONS
 else:  # pragma: no cover - exercised when imported as part of the package
     from .read_human_genome import get_locus_to_data_dict
-    from .consts import HUMAN_GFF, HUMAN_GFF_GZ, HUMAN_DB_BASIC_INTRONS
+    from .consts import HUMAN_GTF, HUMAN_GTF_GZ, HUMAN_DB_BASIC_INTRONS
 
 
-HG38_URL = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/latest/hg38.fa.gz"
-GFF_URL = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.annotation.gff3.gz"
+GRCH38_URL = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/GRCh38.primary_assembly.genome.fa.gz"
+GTF_URL = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.basic.annotation.gtf.gz"
+
 DEFAULT_FASTA = Path(__file__).resolve().parents[1] / "cache" / "genomes" / "hg38" / "hg38.fa.gz"
 
 
@@ -46,7 +47,7 @@ def _download_with_progress(url: str, target: Path, label: str) -> None:
 
 def download_hg38(target: Path) -> None:
     print(f"Downloading hg38 to {target}")
-    _download_with_progress(HG38_URL, target, "hg38.fa.gz")
+    _download_with_progress(GRCH38_URL, target, "hg38.fa.gz")
 
 
 def ensure_hg38_path() -> Path:
@@ -65,28 +66,28 @@ def _decompress_gzip(src: Path, dest: Path) -> None:
         shutil.copyfileobj(gz, out_fh)
 
 
-def ensure_human_gff() -> Path:
-    if HUMAN_GFF.is_file():
-        print(f"Using GFF at {HUMAN_GFF}")
-        return HUMAN_GFF
+def ensure_human_gtf() -> Path:
+    if HUMAN_GTF.is_file():
+        print(f"Using GTF at {HUMAN_GTF}")
+        return HUMAN_GTF
 
-    if HUMAN_GFF_GZ.is_file():
-        _decompress_gzip(HUMAN_GFF_GZ, HUMAN_GFF)
-        return HUMAN_GFF
+    if HUMAN_GTF_GZ.is_file():
+        _decompress_gzip(HUMAN_GTF_GZ, HUMAN_GTF)
+        return HUMAN_GTF
 
-    print(f"Downloading GFF3 to {HUMAN_GFF_GZ}")
-    _download_with_progress(GFF_URL, HUMAN_GFF_GZ, HUMAN_GFF_GZ.name)
-    _decompress_gzip(HUMAN_GFF_GZ, HUMAN_GFF)
-    return HUMAN_GFF
+    print(f"Downloading GTF to {HUMAN_GTF_GZ}")
+    _download_with_progress(GTF_URL, HUMAN_GTF_GZ, HUMAN_GTF_GZ.name)
+    _decompress_gzip(HUMAN_GTF_GZ, HUMAN_GTF)
+    return HUMAN_GTF
 
 
 def run_smoke_test(gene_subset=None) -> None:
     fasta_path = ensure_hg38_path()
-    gff_path = ensure_human_gff()
+    gtf_path = ensure_human_gtf()
     HUMAN_DB_BASIC_INTRONS.parent.mkdir(parents=True, exist_ok=True)
     genes = list(gene_subset or ("TP53", "BRCA1", "EGFR"))
     locus_to_data = get_locus_to_data_dict(gene_subset=genes, create_db=True)
-    print(f"Resolved {len(locus_to_data)} loci using FASTA {fasta_path} and GFF {gff_path}")
+    print(f"Resolved {len(locus_to_data)} loci using FASTA {fasta_path} and GTF {gtf_path}")
     for gene in genes:
         data = locus_to_data.get(gene)
         exon_count = len(getattr(data, "exons", []) or []) if data else 0
