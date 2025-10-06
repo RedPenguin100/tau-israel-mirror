@@ -256,14 +256,14 @@ function Form({ setAsoSequences }) {
     const truncated = exceedsLength
       ? sanitized.slice(0, MAX_SEQUENCE_LENGTH)
       : sanitized;
-      setCustomGeneSequence(truncated);
-      setCustomGeneFileName("");
-      setSelectedGene("");
-      setIsFetchingSequence(false);
-      setSequenceStatus("");
-      setHasInvalidSequenceChars(hasInvalidChars);
+    setCustomGeneSequence(truncated);
+    setCustomGeneFileName("");
+    setSelectedGene("");
+    setIsFetchingSequence(false);
+    setSequenceStatus("");
+    setHasInvalidSequenceChars(hasInvalidChars);
     setHasSequenceLengthError(exceedsLength && sequenceInputMode !== "geneList");
-  }, []);
+  }, [sequenceInputMode]);
 
   const clearCustomSequence = useCallback(() => {
     if (sequenceStatusTimer.current) {
@@ -348,20 +348,22 @@ function Form({ setAsoSequences }) {
                 name="selected-organism"
                 options={ORGANISM}
                 onChange={(selected) => {
-                  setSelectedOrganism(selected);
-                  const organism_data = ORGANISM.find((p) => p.id === selected);
-                  setOrganismFile(organism_data?.file_name || "");
-                  setSelectedGene("");
-                  setGeneNames([]);
-                  setGeneNamesError("");
                   setSequenceInputMode("geneList");
                   setGeneValidationAttempted(false);
                   setHasInvalidSequenceChars(false);
                   setHasSequenceLengthError(false);
+                  if (selected !== selectedOrganism) {
+                    setSelectedOrganism(selected);
+                    const organism_data = ORGANISM.find((p) => p.id === selected);
+                    setOrganismFile(organism_data?.file_name || "");
+                    setGeneNames([]);
+                    setGeneNamesError("");
+                  }
                   if (sequenceStatusTimer.current) {
                     clearTimeout(sequenceStatusTimer.current);
                     sequenceStatusTimer.current = null;
                   }
+                  setSelectedGene("");
                   setCustomGeneSequence("");
                   setCustomGeneFileName("");
                   setIsFetchingSequence(false);
