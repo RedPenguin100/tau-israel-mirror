@@ -27,6 +27,7 @@ dependencies = [
     "tqdm",
     "multiprocess",
     "gget",
+    "mega.py",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
