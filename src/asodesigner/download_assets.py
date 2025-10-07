@@ -7,6 +7,7 @@ import time
 import types
 import zipfile
 from pathlib import Path
+from typing import Union
 
 import requests
 from tqdm import tqdm
@@ -116,34 +117,54 @@ def download(task):
             out.unlink(missing_ok=True)
     return result_path
 
-TASKS = [
-    {
-        "name": "human_db",
-        "url": "https://mega.nz/file/3MERkYxY#XPQdtz-0AMhASxGFvhNliFZEdldrfrp2kYDs5e3Jd-M",
-        "output": "src/data/human/human_v34/dbs/human_gff_basic_introns.db.gz",
-        "extract": True,
-        "extract_to": "src/data/human/human_v34/dbs",
-        "keep_archive": False,
-        "result": "src/data/human/human_v34/dbs/human_gff_basic_introns.db",
-    },
-    {
-        "name": "human_index_structure",
-        "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
-        "output": "src/data/human/human_v34/index_structure.zip",
-        "extract": True,
-        "extract_to": "src/data/human/human_v34",
-        "keep_archive": False,
-        "result": "src/data/human/human_v34/index_structure",
-    },
-]
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ASSET_ROOT = PACKAGE_ROOT / "data" / "human" / "human_v34"
 
 
-def main() -> None:
-    for task in TASKS:
+__all__ = ["download", "ensure_assets"]
+
+
+def ensure_assets(destination: Union[str, Path, None] = None, force: bool = False):
+    """Ensure required human assets exist at ``destination`` (defaults to the package data folder)."""
+
+    human_root = Path(destination) if destination is not None else DEFAULT_ASSET_ROOT
+    human_root = human_root.expanduser()
+    human_root.mkdir(parents=True, exist_ok=True)
+
+    human_db_dir = human_root / "dbs"
+    tasks = (
+        {
+            "name": "human_db",
+            "url": "https://mega.nz/file/3MERkYxY#XPQdtz-0AMhASxGFvhNliFZEdldrfrp2kYDs5e3Jd-M",
+            "output": str(human_db_dir / "human_gff_basic_introns.db.gz"),
+            "extract": True,
+            "extract_to": str(human_db_dir),
+            "keep_archive": False,
+            "result": str(human_db_dir / "human_gff_basic_introns.db"),
+        },
+        {
+            "name": "human_index_structure",
+            "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
+            "output": str(human_root / "index_structure.zip"),
+            "extract": True,
+            "extract_to": str(human_root),
+            "keep_archive": False,
+            "result": str(human_root / "index_structure"),
+        },
+    )
+
+    results = []
+    for task in tasks:
+        result_path = Path(task.get("result") or task["output"])
+        if not force and result_path.exists():
+            print(f"{task['name']} already present at {result_path}")
+            results.append(result_path)
+            continue
+
         print(f"downloading {task['name']}")
-        result = download(task)
-        print(f"stored at {result}")
+        downloaded = download(task)
+        print(f"stored at {downloaded}")
+        results.append(downloaded)
 
+    return results
 
-if __name__ == "__main__":
-    main()

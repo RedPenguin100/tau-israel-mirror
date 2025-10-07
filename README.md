@@ -1,82 +1,85 @@
 # ASOdesigner
 
-ASOdesigner provides feature extraction utilities that support the design of antisense oligonucleotides (ASOs). The
-package bundles folding, accessibility, and sequence analysis helpers that were originally created for the TAU-Israel
-2025 iGEM project.
+![Python](https://img.shields.io/badge/python-3.9--3.12-blue.svg)
+![Status](https://img.shields.io/badge/status-experimental-orange.svg)
+![License](https://img.shields.io/badge/license-CC%20BY%204.0-lightgrey.svg)
+
+> Feature extraction and analysis utilities for antisense oligonucleotide (ASO) design, built for the TAU-Israel 2025 iGEM project.
+
+## Features
+
+- MOE and LNA candidate ranking pipeline with optional feature breakdowns and off-target scoring.
+- Modular feature calculators covering GC metrics, hybridization, RNA accessibility, folding, and toxicity heuristics.
+- One-step asset bootstrap that downloads the human GFF database and Bowtie index structure required by the pipeline.
+- Ready to embed in FastAPI backends or standalone discovery notebooks.
 
 ## Installation
 
-You can install the library directly from PyPI once it is published:
+### From PyPI
 
 ```bash
 pip install asodesigner
 ```
 
-For local development and experimentation inside this repository, install the package in editable mode together with
-its runtime dependencies:
+## Required Assets
 
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-Functions are organised by module. For example, to compute a few sequence-derived features:
+The generator expects the human annotation database and Bowtie index structure to exist under `src/data/human/human_v34/`. Download them once via:
 
 ```python
-from asodesigner.features import seq_features
+from pathlib import Path
 
-gc = seq_features.get_gc_content("ATGGCC")
+from asodesigner.download_assets import ensure_assets
+
+# Defaults to src/data/human/human_v34 when no destination is supplied
+ensure_assets()
+
+# Or specify a custom target directory
+ensure_assets(Path("~/aso_assets/human_v34"))
 ```
 
-Refer to the individual module docstrings for detailed behaviour and expected inputs.
+The helper skips files that already exist and only downloads missing assets. A CLI entry point is also available: `python -m asodesigner.download_assets`, which writes to the same default location.
+
+## Quick Start
+
+Generate top ASO candidates for a human gene, complete with feature annotations:
+
+```python
+from asodesigner.aso_generator import foo
+
+# Retrieve the top 3 MOE + LNA designs for MALAT1
+candidates = foo(
+    organismFile="human",
+    geneName="MALAT1",
+    geneData=None,
+    top_k=3,
+    includeFeatureBreakdown=True,
+)
+
+print(candidates[["seq_name", "Sequence", "mod_pattern"]])
+```
+
+- Set `geneData` to a custom transcript sequence to work outside the reference genome.
+- With `includeFeatureBreakdown=True`, additional columns (e.g., `exp_ps_hybr`, `gc_content`, `at_skew`, `off_target`, `on_target`) are attached to each row.
+- For lower-level feature utilities, explore modules under `src/asodesigner/`.
+
 
 ## Development Workflow
 
 1. Update or add functionality under `src/asodesigner/`.
-2. Keep imports relative within the package (for example, use `from .util import helper`).
-3. Run `python -m compileall src/asodesigner` or your preferred test suite to make sure the code still imports
-   correctly.
+2. Keep imports relative within the package (for example, `from .util import helper`).
+3. Run `pytest` (or `python -m pytest`) to execute the available unit tests.
+4. Optionally run `python -m compileall src/asodesigner` to double-check importability before packaging.
 
+## Extending the Project
 
-## Genome Cache
+- **Feature metrics** – Implement additional sequence, structural, or accessibility metrics under `src/asodesigner/features/`. Many modules (e.g., `seq_features.py`, `hybridization.py`) expose template-style functions you can mirror. 
+- **Pipeline enrichment** – The cross-chemistry ASO pipeline lives in `src/asodesigner/aso_generator.py`. Add new feature columns inside `add_features_for_output` or extend the returned DataFrame schema to expose your metrics downstream.
+- **Constants and configuration** – Global paths and dataset references live in `src/asodesigner/consts.py`. Update these when introducing new organism builds or experimental assets so the rest of the codebase can locate them.
+- **Utility helpers** – Shared logic (reverse complement, translation tables, etc.) sits under `src/asodesigner/util.py` and related utilities. Enhance these modules when new workflows require additional helpers.
+- **Data workflows** – Reference datasets and caches under `src/data/` pair with the code in `src/asodesigner`. When extending to other organisms or assemblies, follow the existing directory layout so asset downloaders and consts remain consistent.
 
-`asodesigner.genome.get_hg38_genome_path()` downloads hg38 into `cache/genomes/hg38`
-when the file is first requested and returns the local FASTA path. Set
-`ASODESIGNER_HG38_PATH` if you already have a FASTA on disk, or
-`ASODESIGNER_HG38_URL` to use a different mirror.
-
-## Docker Compose Workflow
-
-`docker-compose.yml` keeps the genome in a named volume so large files stay out
-of the repository. Start the stack with the default curl download:
-
-```bash
-docker compose up
-```
-
-Switch to the simple Python downloader by setting `GENOME_FETCH_METHOD=python`.
-Both services mount the `genome-cache` volume, so subsequent runs reuse the same
-FASTA file.
-
-## Building and Publishing to PyPI
-
-The project uses a modern `pyproject.toml` driven build. To prepare a release:
-
-1. **Choose a version** – bump the version field in `pyproject.toml` following semantic versioning.
-2. **Build the artifacts**:
-   ```bash
-   python -m build
-   ```
-3. **Inspect the build** – verify the generated wheel and source distribution under `dist/`.
-4. **Upload to PyPI** (or TestPyPI first) using `twine`:
-   ```bash
-   python -m twine upload dist/*
-   ```
-
-Remember that publishing requires a PyPI account and API token. For TestPyPI, swap the repository URL accordingly.
+Have improvements to share? Open an issue or PR—we welcome new metrics, pipeline enrichments, and broader organism support.
 
 ## License
 
-The code is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0). See `LICENSE` for
-full details.
+Released under an MIT-style license tailored for academic and research use. See `LICENSE` for the complete terms and instructions for commercial enquiries.
