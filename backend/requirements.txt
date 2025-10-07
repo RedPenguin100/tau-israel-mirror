@@ -6,3 +6,5 @@ aiosmtplib
 python-dotenv
 python-multipart
 mega.py
+brevo-python
+httpx>=0.24.1
