@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 
 const faqData = [
@@ -57,6 +57,15 @@ const faqData = [
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [reloaded, setReloaded] = useState(false);
+
+  useEffect(() => {
+    // Only reload once to avoid infinite loop
+    if (!reloaded) {
+      setReloaded(true);
+      window.location.reload();
+    }
+  }, [reloaded]);
 
   return (
     <div>
