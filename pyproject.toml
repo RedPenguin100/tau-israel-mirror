@@ -28,6 +28,8 @@ dependencies = [
     "multiprocess",
     "gget",
     "mega.py",
+    "xgboost>=2.0",
+    "scikit-learn>=1.5"
 
 ]
 classifiers = [
