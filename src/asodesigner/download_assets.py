@@ -8,8 +8,10 @@ import types
 import zipfile
 from pathlib import Path
 from typing import Union
+import gdown
 
 import requests
+from prompt_toolkit import output
 from tqdm import tqdm
 
 from .consts import PROJECT_PATH
@@ -20,125 +22,115 @@ if not hasattr(asyncio, "coroutine"):
     asyncio.coroutine = types.coroutine
 
 
-def download(task):
-    """Download a file from a URL (supports both regular URLs and mega.nz)."""
+__all__ = ["download_google", "ensure_assets"]
+
+
+def download_google(task):
+    """
+    Download from Google Drive with gdown + optional retries and extraction.
+
+    Expected `task` keys:
+      - url (str): Google Drive share link or file/folder id URL
+      - output (str|Path): file path or directory to write into
+      - folder (bool, optional): if True, use gdown.download_folder
+      - retries (int, optional): number of attempts (default 3)
+      - use_cookies (bool, optional): pass cookies to gdown (default False)
+      - quiet (bool, optional): gdown progress (default False)
+      - fuzzy (bool, optional): allow non-standard URLs (default True)
+      - extract (bool, optional): auto-extract zip/tar.gz/gz (default False)
+      - extract_to (str|Path, optional): destination for extracted contents
+      - keep_archive (bool, optional): keep the downloaded archive (default False)
+      - result (str|Path, optional): override returned path
+    """
+    url = task["url"]
     out = Path(task["output"])
     result_path = Path(task.get("result") or out)
 
-    url = task["url"]
-    if "mega.nz" in url:
-        from mega import Mega
-        mega = Mega().login()
-        info = mega.get_public_url_info(url)
-        name = info.get("name") or "file"
-        size = info.get("size")
+    # Ensure parent directory exists (file output) or the directory itself (folder mode)
+    is_folder = bool(task.get("folder", False))
+    target_dir = out if (is_folder or out.suffix == "") else out.parent
+    target_dir.mkdir(parents=True, exist_ok=True)
 
-        out = (out / name) if out.is_dir() or out.suffix == "" else out
-        out.parent.mkdir(parents=True, exist_ok=True)
-        download_dir = out.parent
-        tmp = download_dir / name
+    # gdown settings
+    retries = int(task.get("retries", 3))
+    use_cookies = bool(task.get("use_cookies", False))
+    quiet = bool(task.get("quiet", False))
+    fuzzy = bool(task.get("fuzzy", True))
 
-        bar = tqdm(total=size, unit="B", unit_scale=True, desc=f"downloading {name}")
-        err = []
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            if is_folder:
+                # When downloading a folder, `out` should be a directory
+                saved = gdown.download_folder(
+                    url=url,
+                    output=str(out),
+                    quiet=quiet,
+                    use_cookies=use_cookies,
+                    remaining_ok=True
+                )
+                # gdown returns a list of saved paths; normalize result
+                if not saved:
+                    raise RuntimeError("gdown.download_folder returned no files.")
+                result_path = Path(out)
+            else:
+                # File download
+                saved = gdown.download(
+                    url=url,
+                    output=str(out),
+                    quiet=quiet,
+                    use_cookies=use_cookies,
+                    fuzzy=fuzzy
+                )
+                if not saved:
+                    raise RuntimeError("gdown.download returned None/empty path.")
+                result_path = Path(saved)
+            # Success
+            last_err = None
+            break
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                print(f"Download failed (attempt {attempt}/{retries}), retrying...")
+                time.sleep(2)
+            else:
+                raise
 
-        def worker():
-            try:
-                mega.download_url(url, dest_path=str(download_dir))
-            except Exception as e:
-                err.append(e)
-
-        t = threading.Thread(target=worker, daemon=True)
-        t.start()
-        prev = 0
-        while t.is_alive():
-            if tmp.exists():
-                cur = tmp.stat().st_size
-                bar.update(cur - prev)
-                prev = cur
-            time.sleep(0.5)
-        t.join()
-        if tmp.exists():
-            cur = tmp.stat().st_size
-            bar.update(cur - prev)
-            if tmp != out:
-                tmp.rename(out)
-        bar.close()
-        if err:
-            raise err[0]
-    else:
-        out.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Support for retry logic and timeout
-        max_retries = task.get("retries", 3)
-        timeout = task.get("timeout", 600)
-        
-        for attempt in range(max_retries):
-            try:
-                with requests.get(url, stream=True, timeout=timeout) as r:
-                    r.raise_for_status()
-                    total = int(r.headers.get("content-length", 0))
-                    bar = tqdm(
-                        total=total or None,
-                        unit="B",
-                        unit_scale=True,
-                        desc=f"downloading {out.name or 'file'}",
-                    )
-                    with out.open("wb") as f:
-                        for chunk in r.iter_content(1 << 20):
-                            if chunk:
-                                f.write(chunk)
-                                bar.update(len(chunk))
-                    bar.close()
-                break  # Success, exit retry loop
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    print(f"Download failed (attempt {attempt + 1}/{max_retries}), retrying...")
-                    time.sleep(2)
-                else:
-                    raise e
-    
-    if task.get("extract"):
-        dest = Path(task.get("extract_to") or out.parent)
+    # Optional extraction (file mode only)
+    if task.get("extract") and not is_folder:
+        dest = Path(task.get("extract_to") or result_path.parent)
         dest.mkdir(parents=True, exist_ok=True)
-        name = out.name
+        name = result_path.name
+
         if name.endswith(".zip"):
-            with zipfile.ZipFile(out) as z:
-                for member in tqdm(z.infolist(), unit="file", desc=f"extracting {name}"):
-                    z.extract(member, dest)
+            with zipfile.ZipFile(result_path) as z:
+                z.extractall(dest)
             if "result" not in task:
                 result_path = dest
         elif name.endswith(".tar.gz") or name.endswith(".tgz"):
-            with tarfile.open(out, "r:gz") as z:
-                for member in tqdm(z.getmembers(), unit="file", desc=f"extracting {name}"):
-                    z.extract(member, dest)
+            with tarfile.open(result_path, "r:gz") as z:
+                z.extractall(dest)
             if "result" not in task:
                 result_path = dest
-        elif name.endswith(".gz"):
-            target = dest / out.stem
-            bar = tqdm(
-                total=out.stat().st_size,
-                unit="B",
-                unit_scale=True,
-                desc=f"extracting {name}"
-            )
-            with gzip.open(out, "rb") as src, target.open("wb") as dst:
+        elif name.endswith(".gz") and not name.endswith(".tar.gz"):
+            target = dest / result_path.stem
+            with gzip.open(result_path, "rb") as src, target.open("wb") as dst:
                 while True:
                     chunk = src.read(1 << 20)
                     if not chunk:
                         break
                     dst.write(chunk)
-                    bar.update(len(chunk))
-            bar.close()
             if "result" not in task:
                 result_path = target
+
         if not task.get("keep_archive"):
-            out.unlink(missing_ok=True)
-    
-    return result_path
+            # best-effort cleanup
+            try:
+                Path(saved).unlink(missing_ok=True)  # if saved is a string path
+            except Exception:
+                pass
 
-
-
-__all__ = ["download", "ensure_assets"]
+    return Path(result_path)
 
 
 def ensure_assets(destination: Union[str, Path, None] = None, force: bool = False):
@@ -164,16 +156,19 @@ def ensure_assets(destination: Union[str, Path, None] = None, force: bool = Fals
     db_dir.expanduser().mkdir(parents=True, exist_ok=True)
     index_dir = PROJECT_PATH / "off_target"
     index_dir.expanduser().mkdir(parents=True, exist_ok=True)
+    project_dir = PROJECT_PATH
+    project_dir.expanduser().mkdir(parents=True, exist_ok=True)
 
     # Create directories
     genome_dir.mkdir(parents=True, exist_ok=True)
     db_dir.mkdir(parents=True, exist_ok=True)
     index_dir.mkdir(parents=True, exist_ok=True)
-    
+    project_dir.mkdir(parents=True, exist_ok=True)
+
     tasks = (
         {
             "name": "human_genome",
-            "url": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/GRCh38.p13.genome.fa.gz",
+            "url": "https://drive.google.com/file/d/1zRxJNMtipdurpHo1EZad0YJZ8u6n3X-J/view?usp=drive_link",
             "output": str(genome_dir / "GRCh38.p13.genome.fa.gz"),
             "extract": True,
             "extract_to": str(genome_dir),
@@ -184,23 +179,32 @@ def ensure_assets(destination: Union[str, Path, None] = None, force: bool = Fals
         },
         {
             "name": "human_db",
-            "url": "https://mega.nz/file/3MERkYxY#XPQdtz-0AMhASxGFvhNliFZEdldrfrp2kYDs5e3Jd-M",
+            "url": "https://drive.google.com/file/d/18tmvD9NYUpoC6LCghvVkush5fNOGI29-/view?usp=drive_link",
             "output": str(db_dir / "human_gff_basic_introns.db.gz"),
             "extract": True,
             "extract_to": str(db_dir),
             "keep_archive": False,
             "result": str(db_dir / "human_gff_basic_introns.db"),
         },
-        # TODO: fix
-        # {
-        #     "name": "human_index_structure",
-        #     "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
-        #     "output": str(index_dir / "index_structure.zip"),
-        #     "extract": True,
-        #     "extract_to": str(index_dir),
-        #     "keep_archive": False,
-        #     "result": str(index_dir / "index_structure"),
-        # },
+        {
+            "name": "human_index_structure",
+            "url": "https://drive.google.com/file/d/1nmW-IEdytnYA-_zL9nomNqtwMsI2CpB2/view?usp=drive_link",
+            "output": str(index_dir / "index_structure.zip"),
+            "extract": True,
+            "extract_to": str(index_dir),
+            "keep_archive": False,
+            "result": str(index_dir / "index_structure"),
+        },
+        {
+            "name": "chromosome_stub",
+            "url": "https://drive.google.com/file/d/1jwdNFqmQB_CgUgMFHCX-i5eqDSNdaBbP/view?usp=drive_link",
+            "output": str(project_dir / "chromosomes.zip"),
+            "extract": True,
+            "extract_to": str(project_dir),
+            "keep_archive": False,
+            "result": str(project_dir / "chromosomes"),
+        },
+
     )
 
     results = []
@@ -216,7 +220,7 @@ def ensure_assets(destination: Union[str, Path, None] = None, force: bool = Fals
 
         print(f"Downloading {task['name']}...")
         try:
-            downloaded = download(task)
+            downloaded = download_google(task)
             print(f"✓ {task['name']} successfully stored at {downloaded}")
             results.append(downloaded)
         except Exception as e:
