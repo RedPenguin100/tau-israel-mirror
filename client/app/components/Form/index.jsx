@@ -19,6 +19,8 @@ const SEQUENCE_MODES = [
   { id: "paste", label: "Enter Gene Sequence" },
 ];
 
+const UNSUPPORTED_ORGANISMS = new Set(["yeast", "mouse", "E_coli"]);
+
 const INVALID_SEQUENCE_ERROR = "Only A, T, C, G are allowed when entering a gene sequence";
 const MAX_SEQUENCE_LENGTH = 2_000_000;
 const SEQUENCE_LENGTH_ERROR = "Gene sequence must be fewer than 2,000,000 nucleotides";
@@ -66,6 +68,7 @@ function Form({ setAsoSequences }) {
 
   const $isLoading = useStore(isLoading);
   const topKError = errors.find((err) => err.toLowerCase().includes('top-k results'));
+  const isUnsupportedOrganism = UNSUPPORTED_ORGANISMS.has(selectedOrganism);
 
   const isFormValid = useCallback(
     (skipGeneValidation = false) => {
@@ -374,6 +377,11 @@ function Form({ setAsoSequences }) {
               />
             </div>
           </section>
+          {isUnsupportedOrganism && (
+            <div className={styles.unsupportedNotice} role="alert">
+              This organism is not supported yet. It will be available in the next software update.
+            </div>
+          )}
         </>
       )}
 

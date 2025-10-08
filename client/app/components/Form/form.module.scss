@@ -92,6 +92,17 @@
 
 }
 
+.unsupportedNotice {
+  border: 2px solid var(--accent-dark);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  background: #fff8e1;
+  color: var(--accent-dark);
+  max-width: 660px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+
 .sequence_input_2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

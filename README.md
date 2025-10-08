@@ -37,17 +37,17 @@ ensure_assets()
 ensure_assets(Path("~/aso_assets/human_v34"))
 ```
 
-The helper skips files that already exist and only downloads missing assets. A CLI entry point is also available: `python -m asodesigner.download_assets`, which writes to the same default location.
+The helper skips files that already exist and only downloads missing assets.
 
 ## Quick Start
 
 Generate top ASO candidates for a human gene, complete with feature annotations:
 
 ```python
-from asodesigner.aso_generator import foo
+from asodesigner.aso_generator import design_asos
 
 # Retrieve the top 3 MOE + LNA designs for MALAT1
-candidates = foo(
+candidates = design_asos(
     organismFile="human",
     geneName="MALAT1",
     geneData=None,
@@ -55,7 +55,7 @@ candidates = foo(
     includeFeatureBreakdown=True,
 )
 
-print(candidates[["seq_name", "Sequence", "mod_pattern"]])
+print(candidates[["Sequence", "mod_pattern"]])
 ```
 
 - Set `geneData` to a custom transcript sequence to work outside the reference genome.
