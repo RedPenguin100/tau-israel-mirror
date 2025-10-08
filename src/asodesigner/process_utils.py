@@ -1,26 +1,16 @@
 import json
-import os
-import random
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
-import pandas as pd
 from fuzzysearch import find_near_matches
 from tqdm import tqdm
 
-from asodesigner.cache import load_cache_off_target_hybridization, load_cache_off_target_wc, update_loaded_data, \
-    save_cache
-from asodesigner.consts import EXPERIMENT_RESULTS, CACHE_DIR
-from asodesigner.experiment import Experiment
-from asodesigner.features.feature_names import SENSE_START, SENSE_LENGTH
-from asodesigner.fold import get_trigger_mfe_scores_by_risearch, get_mfe_scores, dump_target_file, calculate_energies
-from asodesigner.result import save_results_organism
-from asodesigner.target_finder import iterate_template_antisense
+from asodesigner.consts import EXPERIMENT_RESULTS
 from asodesigner.timer import Timer
 from asodesigner.util import get_antisense
 
 
-class LocusInfo:
+class LocusInfoOld:
     def __init__(self, seq=None):
         # Default empty fields
         self.exons = []
@@ -48,10 +38,11 @@ class LocusInfo:
             self.gene_type = "unknown"
             self.exon_concat = seq
             self.full_mrna = seq
+
     def __repr__(self):
         print("LocusInfo:")
         for field, value in self.__dict__.items():
-            print(f"  {field}: {value}")   
+            print(f"  {field}: {value}")
 
 
 def get_simplified_fasta_dict(fasta_dict):
@@ -68,44 +59,6 @@ def validated_get_simplified_fasta_dict(fasta_dict, simplified_fasta_dict):
     if simplified_fasta_dict is None:
         return get_simplified_fasta_dict(fasta_dict)
     return simplified_fasta_dict
-
-
-def process_fold_single_mrna(args):
-    locus_tag, locus_info, step_size, window_size = args
-    energies = calculate_energies(locus_info.full_mrna, step_size=step_size, window_size=window_size)
-    return locus_tag, energies
-
-
-def process_hybridization(task):
-    i = task.sense_start
-    l = task.sense_length
-    locus_to_data = task.simplified_fasta_dict
-    target_cache_filename = task.target_cache_filename
-
-    parsing_type = task.parsing_type
-
-    scores = get_trigger_mfe_scores_by_risearch(task.get_sense(), locus_to_data,
-                                                minimum_score=task.minimum_score, neighborhood=l,
-                                                parsing_type=parsing_type,
-                                                target_file_cache=target_cache_filename)
-
-    energy_scores = get_mfe_scores(scores, parsing_type=parsing_type)
-    total_candidates = 0
-    energy_sum = 0
-    max_sum = 0
-    binary_sum = 0
-    for locus_scores in energy_scores:
-        total_candidates += len(locus_scores)
-        energy_sum += sum(locus_scores)
-
-        if len(locus_scores) != 0:
-            min_score = min(locus_scores)
-        else:
-            min_score = 0
-
-        max_sum += min_score
-        binary_sum += 1 if min_score < task.binary_cutoff else 0
-    return ResultHybridization(i, l, total_candidates, energy_sum, max_sum, binary_sum)
 
 
 def process_watson_crick_differences(args):
@@ -146,51 +99,6 @@ def parallelize_function(function, tasks, max_threads=None):
                 results.append(future.result())
     print(f"Parallel task done in: {t.elapsed_time}s")
     return results
-
-
-def wc_results_to_dict(results, experiment):
-    results_dict = dict()
-    for result in results:
-        start = result[0]
-        length = result[1]
-        results_dict[experiment.get_aso_antisense_by_index(idx=start, length=length)] = (
-            result[2], result[3], result[4], result[5])
-
-    return results_dict
-
-
-def run_off_target_wc_analysis(experiment: Experiment, fasta_dict=None, simplified_fasta_dict=None, organism=None):
-    validate_organism(organism)
-    simplified_fasta_dict = validated_get_simplified_fasta_dict(fasta_dict, simplified_fasta_dict)
-
-    loaded_data, cache_path = load_cache_off_target_wc(organism)
-
-    tasks = []
-    tasks_cached = 0
-    for (idx, l, sense) in experiment.get_aso_sense_iterator():
-        if get_antisense(sense) not in loaded_data:  # no reason to calculate on cached elements
-            tasks.append((idx, l, sense, simplified_fasta_dict))
-        else:
-            tasks_cached += 1
-
-    print(f"Skipping {tasks_cached} tasks that were found in cache.")
-    results = parallelize_function(process_watson_crick_differences, tasks, max_threads=8)
-
-    results_dict = wc_results_to_dict(results, experiment)
-    update_loaded_data(loaded_data, results_dict)
-    save_cache(cache_path, loaded_data)
-
-    full_results = []
-    for idx, l, antisense in experiment.get_aso_antisense_iterator():
-        loaded_result = loaded_data[antisense]
-        full_results.append((antisense, idx, l, loaded_result[0], loaded_result[1], loaded_result[2], loaded_result[3]))
-
-    columns = ["SEQUENCE", SENSE_START, SENSE_LENGTH, '0_matches', '1_matches', '2_matches', '3_matches']
-    df = pd.DataFrame(full_results, columns=columns)
-    df = df.sort_values(by=['sense_start', 'sense_length'])
-
-    print(df)
-    save_results_organism(df, organism, experiment.name, 'wc_off_targets')
 
 
 class Task:
@@ -238,70 +146,3 @@ class ResultHybridization:
                 result.total_hybridization_max_sum, result.total_hybridization_binary_sum)
 
         return results_dict
-
-
-def run_off_target_hybridization_analysis(experiment: Experiment, fasta_dict=None, simplified_fasta_dict=None,
-                                          organism=None):
-    validate_organism(organism)
-    simplified_fasta_dict = validated_get_simplified_fasta_dict(fasta_dict, simplified_fasta_dict)
-
-    hash = random.getrandbits(64)
-
-    target_cache_filename = f'target-cache-{hash}.fa'
-    # to improve speed of process_hybridization
-    target_cache_path = dump_target_file(target_cache_filename, simplified_fasta_dict)
-
-    loaded_data, cache_path = load_cache_off_target_hybridization(organism)
-
-    tasks = []
-    tasks_cached = 0
-
-    for i, l, sense in experiment.get_aso_sense_iterator():
-        antisense = get_antisense(sense)
-        if not antisense in loaded_data:
-            tasks.append(Task(i, l, sense, simplified_fasta_dict, str(target_cache_path)))
-        else:
-            tasks_cached += 1
-    print(f"Skipping {tasks_cached} tasks that were found in cache.")
-
-    results = parallelize_function(process_hybridization, tasks)
-
-    results_dict = ResultHybridization.results_to_result_dict(results, experiment)
-
-    update_loaded_data(loaded_data, results_dict)
-    save_cache(cache_path, loaded_data)
-
-    full_results = []
-    for i, l, antisense in experiment.get_aso_antisense_iterator():
-        loaded_result = loaded_data[antisense]
-        full_results.append((i, l, loaded_result[0], loaded_result[1], loaded_result[2], loaded_result[3]))
-
-    columns = ['sense_start', 'sense_length', 'total_hybridization_candidates', 'total_hybridization_energy',
-               'total_hybridization_max_sum', 'total_hybridization_binary_sum']
-    df = pd.DataFrame([result for result in full_results], columns=columns)
-
-    print(df)
-    df = df.sort_values(by=['sense_start', 'sense_length'])
-    save_results_organism(df, organism, experiment.name, 'hybridization_off_targets')
-    os.remove(target_cache_path)
-
-
-def run_off_target_fold_analysis(locus_to_data, experiment_name, organism):
-    validate_organism(organism)
-
-    window_size = 40
-    step_size = 15
-
-    tasks = []
-    for key, value in locus_to_data.items():
-        tasks.append((key, value, step_size, window_size))
-
-    results = parallelize_function(process_fold_single_mrna, tasks)
-    results_dict = dict()
-    for result in results:
-        results_dict[result[0]] = result[1]
-
-    result_path = (EXPERIMENT_RESULTS / experiment_name /
-                   f"{organism}_results" / f'fold_off_target_fold_energy_window_{window_size}_step_{step_size}.json')
-    with open(result_path, 'w') as f:
-        json.dump(results, f, indent=4)
