@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Header from "../components/Header";
 
 const faqData = [
@@ -57,15 +57,6 @@ const faqData = [
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [reloaded, setReloaded] = useState(false);
-
-  useEffect(() => {
-    // Only reload once to avoid infinite loop
-    if (!reloaded) {
-      setReloaded(true);
-      window.location.reload();
-    }
-  }, [reloaded]);
 
   return (
     <div>
@@ -77,7 +68,7 @@ export default function FAQPage() {
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               style={{
                 cursor: "pointer",
-                backgroundColor: "#6d81f0ff", 
+                backgroundColor: "#253372ff", 
                 padding: "0.5rem 1rem",
                 borderRadius: "5px",
               }}

@@ -1,20 +1,13 @@
-
-import logging
 import os
 import json
-from pathlib import Path
 import pandas as pd
 import random
 import string
 
-from datetime import datetime
 from .run_pipe import get_n_best_res
 from .consts_dataframe import *
 from .hybridization.hybridization_features import get_exp_psrna_hybridization
-from off_target.aso_counts import run_aso_counts
-
-
-
+from .off_target.aso_counts import run_aso_counts
 
 
 features_for_output = [SEQUENCE,
@@ -81,7 +74,7 @@ def add_off_target(df,full_mRNA_fasta_file):
     on_target_json = run_aso_counts(aso_fasta_path,target_file=full_mRNA_fasta_file)
     add_target_scores(df,all_target_json,on_target_json)
 
-def foo(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
+def design_asos(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
     """
     Main ASO generation function.
     
@@ -158,5 +151,5 @@ if __name__ == "__main__":
     # show all rows (optional)
     pd.set_option('display.max_rows', None)
 
-    df = foo(organismFile='human', geneName='MALAT1', geneData=None, top_k=3, includeFeatureBreakdown=True)
+    df = design_asos(organismFile='human', geneName='MALAT1', geneData=None, top_k=3, includeFeatureBreakdown=True)
     print(df)
