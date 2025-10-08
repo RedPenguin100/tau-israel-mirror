@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 
-PROJECT_PATH = Path(os.path.dirname(os.path.dirname(__file__)))
+
+PROJECT_PATH = '/app/aso_gen/' ## change only this
 
 TEST_PATH = PROJECT_PATH
 

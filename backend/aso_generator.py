@@ -16,6 +16,7 @@ import string
 
 
 
+
 logger = logging.getLogger(__name__)
 
 features_for_output = [SEQUENCE,
@@ -32,7 +33,7 @@ def add_features_for_output(df):
     df.loc[:, 'exp_ps_hybr'] = [
             get_exp_psrna_hybridization(antisense.replace('T', 'U'), temp=37) for
             antisense in df[SEQUENCE]]
-    df.loc[:, 'gc_content'] = df['sense'].apply(lambda seq: (seq.count('G') + seq.count('C')) / len(seq))
+    df.loc[:, 'gc_content'] = df[SEQUENCE].apply(lambda seq: (seq.count('G') + seq.count('C')) / len(seq) * 100 )
 
 def df_to_fasta(df):
     os.makedirs("/tmp", exist_ok=True)
@@ -96,6 +97,17 @@ def foo(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
     Returns:
         dict with 'asoSequence': list of {name, sequence}
     """
+    #checking:
+    # organismFile = 'human'
+    # geneName = 'MALAT1'
+    # geneData = None
+    # top_k = 3 
+    # includeFeatureBreakdown = False
+
+    #
+
+
+
     session_id = random.randint(1, 1_000_000)
     only_exons = True if geneData else False
     gene_lst = [geneData] if geneData else [geneName]
@@ -115,22 +127,23 @@ def foo(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
     #merge_df
     df = pd.concat([moe_df, lna_df], ignore_index=True)
 
-    
     if includeFeatureBreakdown:
         add_features_for_output(df)
         if off_target_flag:
             add_off_target(df,full_mRNA_fasta_path)
             features_for_output.append('off_target')
-            features_for_output.append('on_target') 
+            features_for_output.append('on_target')
         df = df[features_for_output].copy()
     else:
         df = df[[SEQUENCE,'mod_pattern']].copy() 
 
+    record = next(SeqIO.parse(full_mRNA_fasta_path, "fasta"))
+    seq = str(record.seq)
 
 
     # Dummy implementation for testing
     # Replace this with your actual ASO generation logic
-    return df
+    return [df,seq]
     # return {
     #     "asoSequence": [
     #         {"name": "ASO_1", "sequence": "ACGTACGTACGT"},

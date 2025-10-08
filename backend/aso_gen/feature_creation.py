@@ -53,11 +53,9 @@ def fill_df(df,gene,genes_lst,gene_to_data,SEQUENCES,tp = 24, vol =1000,mod_type
     #TO DO:
     df.loc[:, 'Modification_min_distance_to_3prime'] = compute_mod_min_distance_to_3prime(mod_pattern) ## gen more mod_patterns
 
-    #populate_sense_accessibility(df,gene_to_data) change to this before prod!!!! 
+    populate_sense_accessibility(df,gene_to_data)  
     populate_cai_for_aso_dataframe(df,gene_to_data)
-    # df.loc[:, 'CAI_score_global_CDS'] = 0.8526221963673779 # TODO - replace with the calculation
-    df.loc[:,'sense_avg_accessibility'] = 0.5 # takes long time to calc
-    
+
     add_RNaseH1_Krel(df)
     return df
     

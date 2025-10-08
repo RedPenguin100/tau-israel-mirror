@@ -19,6 +19,7 @@ if not hasattr(asyncio, "coroutine"):
 
 
 def download(task):
+    """Download a file from a URL (supports both regular URLs and mega.nz)."""
     out = Path(task["output"])
     result_path = Path(task.get("result") or out)
 
@@ -64,21 +65,36 @@ def download(task):
             raise err[0]
     else:
         out.parent.mkdir(parents=True, exist_ok=True)
-        with requests.get(url, stream=True, timeout=60) as r:
-            r.raise_for_status()
-            total = int(r.headers.get("content-length", 0))
-            bar = tqdm(
-                total=total or None,
-                unit="B",
-                unit_scale=True,
-                desc=f"downloading {out.name or 'file'}",
-            )
-            with out.open("wb") as f:
-                for chunk in r.iter_content(1 << 20):
-                    if chunk:
-                        f.write(chunk)
-                        bar.update(len(chunk))
-            bar.close()
+        
+        # Support for retry logic and timeout
+        max_retries = task.get("retries", 3)
+        timeout = task.get("timeout", 600)
+        
+        for attempt in range(max_retries):
+            try:
+                with requests.get(url, stream=True, timeout=timeout) as r:
+                    r.raise_for_status()
+                    total = int(r.headers.get("content-length", 0))
+                    bar = tqdm(
+                        total=total or None,
+                        unit="B",
+                        unit_scale=True,
+                        desc=f"downloading {out.name or 'file'}",
+                    )
+                    with out.open("wb") as f:
+                        for chunk in r.iter_content(1 << 20):
+                            if chunk:
+                                f.write(chunk)
+                                bar.update(len(chunk))
+                    bar.close()
+                break  # Success, exit retry loop
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"Download failed (attempt {attempt + 1}/{max_retries}), retrying...")
+                    time.sleep(2)
+                else:
+                    raise e
+    
     if task.get("extract"):
         dest = Path(task.get("extract_to") or out.parent)
         dest.mkdir(parents=True, exist_ok=True)
@@ -115,56 +131,133 @@ def download(task):
                 result_path = target
         if not task.get("keep_archive"):
             out.unlink(missing_ok=True)
+    
     return result_path
 
-PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ASSET_ROOT = PACKAGE_ROOT / "data" / "human" / "human_v34"
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 __all__ = ["download", "ensure_assets"]
 
 
 def ensure_assets(destination: Union[str, Path, None] = None, force: bool = False):
-    """Ensure required human assets exist at ``destination`` (defaults to the package data folder)."""
+    """
+    Ensure required human assets exist at specified locations relative to this script.
+    
+    Downloads 3 essential files:
+    1. Human genome reference (GRCh38.p13) -> ./data/human/human_v34/
+    2. Human gene annotation database -> ./data/human/human_v34/dbs/
+    3. Human index structure -> ./off_target/index_structure/
+    """
 
-    human_root = Path(destination) if destination is not None else DEFAULT_ASSET_ROOT
-    human_root = human_root.expanduser()
-    human_root.mkdir(parents=True, exist_ok=True)
+    print("=" * 50)
+    print("Starting Asset Downloads")
+    print("=" * 50)
+    print(f"Script location: {SCRIPT_DIR}")
+    print()
 
-    human_db_dir = human_root / "dbs"
+    # Define paths relative to script location
+    genome_dir = SCRIPT_DIR / "data" / "human" / "human_v34"
+    db_dir = SCRIPT_DIR / "data" / "human" / "human_v34" / "dbs"
+    index_dir = SCRIPT_DIR / "off_target"
+    
+    # Create directories
+    genome_dir.mkdir(parents=True, exist_ok=True)
+    db_dir.mkdir(parents=True, exist_ok=True)
+    index_dir.mkdir(parents=True, exist_ok=True)
+    
     tasks = (
+        {
+            "name": "human_genome",
+            "url": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/GRCh38.p13.genome.fa.gz",
+            "output": str(genome_dir / "GRCh38.p13.genome.fa.gz"),
+            "extract": True,
+            "extract_to": str(genome_dir),
+            "keep_archive": False,
+            "result": str(genome_dir / "GRCh38.p13.genome.fa"),
+            "retries": 3,
+            "timeout": 600,
+        },
         {
             "name": "human_db",
             "url": "https://mega.nz/file/3MERkYxY#XPQdtz-0AMhASxGFvhNliFZEdldrfrp2kYDs5e3Jd-M",
-            "output": str(human_db_dir / "human_gff_basic_introns.db.gz"),
+            "output": str(db_dir / "human_gff_basic_introns.db.gz"),
             "extract": True,
-            "extract_to": str(human_db_dir),
+            "extract_to": str(db_dir),
             "keep_archive": False,
-            "result": str(human_db_dir / "human_gff_basic_introns.db"),
+            "result": str(db_dir / "human_gff_basic_introns.db"),
         },
         {
             "name": "human_index_structure",
             "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
-            "output": str(human_root / "index_structure.zip"),
+            "output": str(index_dir / "index_structure.zip"),
             "extract": True,
-            "extract_to": str(human_root),
+            "extract_to": str(index_dir),
             "keep_archive": False,
-            "result": str(human_root / "index_structure"),
+            "result": str(index_dir / "index_structure"),
         },
     )
 
     results = []
-    for task in tasks:
+    for i, task in enumerate(tasks, 1):
         result_path = Path(task.get("result") or task["output"])
+        print(f"[{i}/{len(tasks)}] Processing {task['name']}...")
+        
         if not force and result_path.exists():
-            print(f"{task['name']} already present at {result_path}")
+            print(f"✓ {task['name']} already present at {result_path}")
             results.append(result_path)
+            print()
             continue
 
-        print(f"downloading {task['name']}")
-        downloaded = download(task)
-        print(f"stored at {downloaded}")
-        results.append(downloaded)
+        print(f"Downloading {task['name']}...")
+        try:
+            downloaded = download(task)
+            print(f"✓ {task['name']} successfully stored at {downloaded}")
+            results.append(downloaded)
+        except Exception as e:
+            print(f"✗ Failed to download {task['name']}: {e}")
+            raise
+        print()
+
+    print("=" * 50)
+    print("✓ All assets downloaded successfully!")
+    print("=" * 50)
+    print(f"Total files downloaded: {len(results)}")
+    for result in results:
+        print(f"  - {result}")
+    print()
 
     return results
 
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Download required human genome and annotation assets"
+    )
+    parser.add_argument(
+        "--destination",
+        "-d",
+        type=str,
+        default=None,
+        help="Destination directory (default: package data folder)",
+    )
+    parser.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="Force re-download even if files exist",
+    )
+    
+    args = parser.parse_args()
+    
+    try:
+        ensure_assets(destination=args.destination, force=args.force)
+    except KeyboardInterrupt:
+        print("\n\nDownload interrupted by user")
+        exit(1)
+    except Exception as e:
+        print(f"\n\nError: {e}")
+        exit(1)

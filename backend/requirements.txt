@@ -8,3 +8,5 @@ python-multipart
 mega.py
 brevo-python
 httpx>=0.24.1
+reportlab
+pandas

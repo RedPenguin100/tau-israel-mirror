@@ -75,14 +75,7 @@ def get_init_df(target_mrna, end,mod_type='moe'):
 
 
 def create_gene_to_data(genes_u): # can work only for our known list
-    cache_path = Path("./gene_to_data_simple_cache.pickle")
-    if not cache_path.exists():
-        gene_to_data = get_locus_to_data_dict(include_introns=True, gene_subset=genes_u)
-
-    else:
-        print("pickle exist")
-        with open(cache_path, 'rb') as f:
-            gene_to_data = pickle.load(f)
+    gene_to_data = get_locus_to_data_dict(include_introns=True, gene_subset=genes_u)
     return gene_to_data        
 
 def create_and_load_model(json_weight="model.json",seed = 42):
