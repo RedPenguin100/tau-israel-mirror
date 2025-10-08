@@ -12,6 +12,8 @@ from typing import Union
 import requests
 from tqdm import tqdm
 
+from .consts import PROJECT_PATH
+
 # ``mega`` depends on ``tenacity`` versions that still expect ``asyncio.coroutine``.
 # Python >=3.12 removed this alias, so recreate it if needed before importing mega.
 if not hasattr(asyncio, "coroutine"):
@@ -135,8 +137,6 @@ def download(task):
     return result_path
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-
 
 __all__ = ["download", "ensure_assets"]
 
@@ -154,14 +154,17 @@ def ensure_assets(destination: Union[str, Path, None] = None, force: bool = Fals
     print("=" * 50)
     print("Starting Asset Downloads")
     print("=" * 50)
-    print(f"Script location: {SCRIPT_DIR}")
+    print(f"Cache location: {PROJECT_PATH}")
     print()
 
     # Define paths relative to script location
-    genome_dir = SCRIPT_DIR / "data" / "human" / "human_v34"
-    db_dir = SCRIPT_DIR / "data" / "human" / "human_v34" / "dbs"
-    index_dir = SCRIPT_DIR / "off_target"
-    
+    genome_dir = PROJECT_PATH / "data" / "human" / "human_v34"
+    genome_dir.expanduser().mkdir(parents=True, exist_ok=True)
+    db_dir = PROJECT_PATH / "data" / "human" / "human_v34" / "dbs"
+    db_dir.expanduser().mkdir(parents=True, exist_ok=True)
+    index_dir = PROJECT_PATH / "off_target"
+    index_dir.expanduser().mkdir(parents=True, exist_ok=True)
+
     # Create directories
     genome_dir.mkdir(parents=True, exist_ok=True)
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -188,15 +191,16 @@ def ensure_assets(destination: Union[str, Path, None] = None, force: bool = Fals
             "keep_archive": False,
             "result": str(db_dir / "human_gff_basic_introns.db"),
         },
-        {
-            "name": "human_index_structure",
-            "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
-            "output": str(index_dir / "index_structure.zip"),
-            "extract": True,
-            "extract_to": str(index_dir),
-            "keep_archive": False,
-            "result": str(index_dir / "index_structure"),
-        },
+        # TODO: fix
+        # {
+        #     "name": "human_index_structure",
+        #     "url": "https://mega.nz/file/vdNwgJhD#DnUqX1l7w-yt9yn2xD3lZ7UltYDzD7y4biR_Klswu64",
+        #     "output": str(index_dir / "index_structure.zip"),
+        #     "extract": True,
+        #     "extract_to": str(index_dir),
+        #     "keep_archive": False,
+        #     "result": str(index_dir / "index_structure"),
+        # },
     )
 
     results = []
