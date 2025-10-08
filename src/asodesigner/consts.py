@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-PROJECT_PATH = Path(os.path.dirname(os.path.dirname(__file__)))
+PROJECT_PATH = Path('/tmp') / '.cache' / 'asodesigner'
 
 TEST_PATH = PROJECT_PATH
 

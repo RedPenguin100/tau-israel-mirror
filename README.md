@@ -1,4 +1,4 @@
-# ASOdesigner
+# ASODesigner
 
 ![Python](https://img.shields.io/badge/python-3.9--3.12-blue.svg)
 ![Status](https://img.shields.io/badge/status-experimental-orange.svg)
@@ -48,7 +48,7 @@ from asodesigner.aso_generator import design_asos
 
 # Retrieve the top 3 MOE + LNA designs for MALAT1
 candidates = design_asos(
-    organismFile="human",
+    organismName="human",
     geneName="MALAT1",
     geneData=None,
     top_k=3,
