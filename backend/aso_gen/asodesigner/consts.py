@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 
-PROJECT_PATH = '/app/aso_gen/' ## change only this
+PROJECT_PATH = Path('/app/aso_gen/') ## change only this
 
 TEST_PATH = PROJECT_PATH
 
