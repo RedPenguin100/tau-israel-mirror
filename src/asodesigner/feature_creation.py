@@ -1,13 +1,9 @@
-from .yehuda_code.Folding_Functions import get_sense_with_flanks
-from .yehuda_code.access_calculator import AccessCalculator
 from .utils import *
 from .data_handling import *
-from .features.mod_features import compute_mod_min_distance_to_3prime 
-from .hybridization.hybridization_features import get_exp_psrna_hybridization
-from populate.populate_sense_accessibility import populate_sense_accessibility
-from populate.populate_cai import populate_cai_for_aso_dataframe
+from .features.mod_features import compute_mod_min_distance_to_3prime
+from .populate.populate_sense_accessibility import populate_sense_accessibility
+from .populate.populate_cai import populate_cai_for_aso_dataframe
 from .features.RNaseH_features import rnaseh1_dict, compute_rnaseh1_score
-
 
 FLANK_SIZE = 120
 ACCESS_SIZE = 13
@@ -15,29 +11,32 @@ SEED_SIZE = 13
 SEED_SIZES = [SEED_SIZE * m for m in range(1, 4)]
 ACCESS_WIN_SIZE = 80
 
-def add_RNaseH1_Krel(df,exp='R7_krel'):
+
+def add_RNaseH1_Krel(df, exp='R7_krel'):
     best_window_start_krel = {
-        'R4a_krel': {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 3,  18: 2, 19: 4, 20: 3, 21: 0, 22: 0, 25:0},
-        'R4b_krel': {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1,  18: 3, 19: 1, 20: 3, 21: 0, 22: 0, 25:0},
-        'R7_krel':  {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 3, 17: 2,  18: 4, 19: 6, 20: 4, 21: 0, 22: 0, 25:0},
+        'R4a_krel': {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 3, 18: 2, 19: 4, 20: 3, 21: 0, 22: 0, 25: 0},
+        'R4b_krel': {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1, 18: 3, 19: 1, 20: 3, 21: 0, 22: 0, 25: 0},
+        'R7_krel': {10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 3, 17: 2, 18: 4, 19: 6, 20: 4, 21: 0, 22: 0, 25: 0},
     }
     weights = rnaseh1_dict(exp)
+
     def score_row(row):
         length = len(row['Sequence'])
         pos = best_window_start_krel.get(exp, {}).get(length, 0)
         return compute_rnaseh1_score(row['Sequence'], weights, window_start=pos)
+
     col_name = f"RNaseH1_Krel_score_{exp}"
     df[col_name] = df.apply(score_row, axis=1)
     return df
 
 
-def fill_df(df,gene,genes_lst,gene_to_data,SEQUENCES,tp = 24, vol =1000,mod_type ="moe" ):
-    assert( len(genes_lst)  == 1 )
+def fill_df(df, gene, genes_lst, gene_to_data, SEQUENCES, tp=24, vol=1000, mod_type="moe"):
+    assert (len(genes_lst) == 1)
     mod_pattern = mod_type_dic[mod_type]
     df['mod_pattern'] = mod_pattern
     df[CANONICAL_GENE] = gene
     df[CELL_LINE_ORGANISM] = 'human'
-    df[INHIBITION] = 0 ## for function
+    df[INHIBITION] = 0  ## for function
     df = get_populated_df_with_structure_features(df, genes_lst, gene_to_data)
     df[TREATMENT_PERIOD] = tp  # keep constant for all
     df[VOLUME] = vol  # keep constant for all
@@ -50,33 +49,34 @@ def fill_df(df,gene,genes_lst,gene_to_data,SEQUENCES,tp = 24, vol =1000,mod_type
     populate_features(df, easy_to_populate)
     fold_variants = [(40, 15)]
     df = get_populate_fold(df, genes_lst, gene_to_data, fold_variants=fold_variants)
-    #TO DO:
-    df.loc[:, 'Modification_min_distance_to_3prime'] = compute_mod_min_distance_to_3prime(mod_pattern) ## gen more mod_patterns
+    # TO DO:
+    df.loc[:, 'Modification_min_distance_to_3prime'] = compute_mod_min_distance_to_3prime(
+        mod_pattern)  ## gen more mod_patterns
 
-    populate_sense_accessibility(df,gene_to_data) change to this before prod!!!! 
-    populate_cai_for_aso_dataframe(df,gene_to_data)
+    # df.loc[:, 'sense_avg_accessibility'] = 0.8526221963673779 # TODO - replace with the calculation
+    populate_sense_accessibility(df, gene_to_data[gene])
+    populate_cai_for_aso_dataframe(df, gene_to_data[gene])
+    # df.loc[:, SENSE_AVG_ACCESSIBILITY] = 0.8526221963673779 # TODO - replace with the calculation
     # df.loc[:, 'CAI_score_global_CDS'] = 0.8526221963673779 # TODO - replace with the calculation
-    #df.loc[:,'sense_avg_accessibility'] = 0.5 # takes long time to calc
-    
+    # df.loc[:,'sense_avg_accessibility'] = 0.5 # takes long time to calc
+
     add_RNaseH1_Krel(df)
     return df
-    
-def fill_dfs(genes_lst,gene_to_data,mod_type='moe',tp = 24, vol =1000):
+
+
+def fill_dfs(genes_lst, gene_to_data, mod_type='moe', tp=24, vol=1000):
     SEQUENCES = {}
     for gene in genes_lst:
         SEQUENCES[gene] = gene_to_data[gene].full_mrna
     dfs = {}
     for gene in genes_lst:
         gene_info = gene_to_data[gene]
-        dfs[gene] = get_init_df(gene_info.full_mrna, gene_info.exon_indices[-1][1] - gene_info.cds_start,mod_type=mod_type)
+        dfs[gene] = get_init_df(gene_info.full_mrna, gene_info.exon_indices[-1][1] - gene_info.cds_start,
+                                mod_type=mod_type)
     for gene, df in dfs.items():
-        dfs[gene] = fill_df(df,gene,genes_lst,gene_to_data,SEQUENCES,mod_type=mod_type)
+        dfs[gene] = fill_df(df, gene, genes_lst, gene_to_data, SEQUENCES, mod_type=mod_type)
 
-    return dfs    
-
-
-
-
+    return dfs
 
 # def compute_sense_accessibility(row, flank_size, access_win_size, seed_sizes, access_size, min_gc=0, max_gc=100, gc_ranges=1):
 

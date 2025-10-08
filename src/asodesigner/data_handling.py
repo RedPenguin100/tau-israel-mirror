@@ -1,11 +1,15 @@
 import primer3
+import numpy as np
+
 from ViennaRNA import RNA
 
-from asodesigner.features.seq_features import palindromic_fraction, homooligo_count, hairpin_score, seq_entropy, \
+from .features.vienna_fold import calculate_energies, get_weighted_energy
+from .util import get_antisense
+from .features.seq_features import palindromic_fraction, homooligo_count, hairpin_score, seq_entropy, \
     gc_skew, at_skew, \
     nucleotide_diversity, stop_codon_count, get_gc_content, at_rich_region_score, poly_pyrimidine_stretch
-import numpy as np
-from .consts import *
+from .consts_dataframe import CELL_LINE_ORGANISM, CANONICAL_GENE, SEQUENCE, SENSE_LENGTH, SENSE_START
+from .utils import INHIBITION
 
 
 def get_unique_human_genes(all_data):
@@ -25,6 +29,7 @@ def get_gene_to_data(genes_u):
     from asodesigner.read_human_genome import get_locus_to_data_dict
     import pickle
     from asodesigner.consts import CACHE_DIR
+    import copy
 
     cache_path = CACHE_DIR / 'gene_to_data_simple_cache.pickle'
 
@@ -73,7 +78,8 @@ def get_populated_df_with_structure_features(df, genes_u, gene_to_data):
         sense = get_antisense(antisense)
         idx = pre_mrna.find(sense)
         all_data_human_gene.loc[index, SENSE_START] = idx
-        all_data_human_gene.loc[index, SENSE_START_FROM_END] = np.abs(locus_info.exon_indices[-1][1] - locus_info.cds_start - idx)
+        all_data_human_gene.loc[index, SENSE_START_FROM_END] = np.abs(
+            locus_info.exon_indices[-1][1] - locus_info.cds_start - idx)
         all_data_human_gene.loc[index, SENSE_LENGTH] = len(antisense)
         if idx != -1:
             genome_corrected_index = idx + locus_info.cds_start
@@ -93,21 +99,18 @@ def get_populated_df_with_structure_features(df, genes_u, gene_to_data):
                     found = True
                     break
             for i, utr_indices in enumerate(locus_info.utr_indices):
-                    if utr_indices[0] <= genome_corrected_index <= utr_indices[1]:
-                        all_data_human_gene.loc[index, SENSE_TYPE] = 'utr'
-                        all_data_human_gene.loc[index, SENSE_UTR] = 1
+                if utr_indices[0] <= genome_corrected_index <= utr_indices[1]:
+                    all_data_human_gene.loc[index, SENSE_TYPE] = 'utr'
+                    all_data_human_gene.loc[index, SENSE_UTR] = 1
 
-                        found = True
-                        break
+                    found = True
+                    break
         if not found:
             all_data_human_gene.loc[index, SENSE_TYPE] = 'intron'
     return all_data_human_gene
 
 
 def get_populate_fold(df, genes_u, gene_to_data, fold_variants=[(40, 15)]):
-    from asodesigner.fold import calculate_energies, get_weighted_energy
-    from asodesigner.util import get_antisense
-
     all_data_human_gene_premrna_no_nan = df.copy()
 
     # Comment out the long cases for quick running

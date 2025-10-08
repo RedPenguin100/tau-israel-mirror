@@ -96,7 +96,6 @@ def get_human_genome_annotation_db(create_db=False):
 def get_locus_to_data_dict(create_db=False, include_introns=False, gene_subset=None):
     db = get_human_genome_annotation_db(create_db)
     fasta_dict = read_human_genome_fasta_dict()
-    print("Length: ", len(fasta_dict))
 
     locus_to_data = dict()
     locus_to_strand = dict()
