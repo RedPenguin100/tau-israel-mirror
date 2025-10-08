@@ -74,12 +74,12 @@ def add_off_target(df,full_mRNA_fasta_file):
     on_target_json = run_aso_counts(aso_fasta_path,target_file=full_mRNA_fasta_file)
     add_target_scores(df,all_target_json,on_target_json)
 
-def design_asos(organismFile, geneName, geneData, top_k, includeFeatureBreakdown):
+def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown):
     """
     Main ASO generation function.
     
     Args:
-        organismFile: Path to organism file
+        organismName: Only 'human' or 'other' is supported.
         geneName: Selected gene identifier
         geneData: Nucleotide sequence or identifier supplied by the client (optional)
         top_k: Number of top results to return
@@ -102,7 +102,7 @@ def design_asos(organismFile, geneName, geneData, top_k, includeFeatureBreakdown
     session_id = random.randint(1, 1_000_000)
     only_exons = True if geneData else False
     gene_lst = [geneData] if geneData else [geneName]
-    off_target_flag = True if organismFile == 'human' else False
+    off_target_flag = True if organismName == 'human' else False
     if off_target_flag:
         if geneData:
             full_mRNA_fasta_path = f'/tmp/{session_id}/full_mrna_{session_id}.fa' # empty will be created
@@ -151,5 +151,5 @@ if __name__ == "__main__":
     # show all rows (optional)
     pd.set_option('display.max_rows', None)
 
-    df = design_asos(organismFile='human', geneName='MALAT1', geneData=None, top_k=3, includeFeatureBreakdown=True)
+    df = design_asos(organismName='human', geneName='MALAT1', geneData=None, top_k=3, includeFeatureBreakdown=True)
     print(df)
