@@ -95,10 +95,6 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
     # top_k = 3 
     # includeFeatureBreakdown = False
 
-    #
-
-
-
     session_id = random.randint(1, 1_000_000)
     only_exons = True if geneData else False
     gene_lst = [geneData] if geneData else [geneName]
