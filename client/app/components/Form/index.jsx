@@ -19,7 +19,7 @@ const SEQUENCE_MODES = [
   { id: "paste", label: "Enter Gene Sequence" },
 ];
 
-const UNSUPPORTED_ORGANISMS = new Set(["yeast", "mouse", "E_coli"]);
+const UNSUPPORTED_ORGANISMS = new Set(["mouse", "E_coli"]);
 
 const INVALID_SEQUENCE_ERROR = "Only A, T, C, G are allowed when entering a gene sequence";
 const MAX_SEQUENCE_LENGTH = 2_000_000;
@@ -323,6 +323,10 @@ function Form({ setAsoSequences }) {
   );
 
   const handleNextStep = useCallback(() => {
+    if (step === 1 && isUnsupportedOrganism) {
+      return;
+    }
+
     if (step === 2) {
       setGeneValidationAttempted(true);
       if (!isFormValid(false)) {
@@ -331,7 +335,7 @@ function Form({ setAsoSequences }) {
       setGeneValidationAttempted(false);
     }
     setStep((s) => s + 1);
-  }, [step, isFormValid]);
+  }, [step, isFormValid, isUnsupportedOrganism]);
 
   useEffect(() => {
     if (step !== 4 && attemptedSubmit) {
@@ -376,12 +380,12 @@ function Form({ setAsoSequences }) {
                 defaultOption={selectedOrganism}
               />
             </div>
+            {isUnsupportedOrganism && (
+              <div className={styles.unsupportedNotice} role="alert">
+                This organism is not supported yet. It will be available in the next software update.
+              </div>
+            )}
           </section>
-          {isUnsupportedOrganism && (
-            <div className={styles.unsupportedNotice} role="alert">
-              This organism is not supported yet. It will be available in the next software update.
-            </div>
-          )}
         </>
       )}
 
@@ -703,6 +707,7 @@ function Form({ setAsoSequences }) {
             type="button"
             className={styles.btn}
             onClick={handleNextStep}
+            disabled={step === 1 && isUnsupportedOrganism}
           >
             Next
           </button>
