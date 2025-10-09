@@ -48,6 +48,8 @@ The helper skips files that already exist and only downloads missing assets.
 
 Generate top ASO candidates for a human gene, complete with feature annotations:
 
+> **Note:** The process can be **slow** (30+ minutes) due to folding modeling and feature computation.
+
 ```python
 from asodesigner.aso_generator import design_asos
 
