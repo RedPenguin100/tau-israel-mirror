@@ -4,6 +4,7 @@ import gzip
 import os
 import platform
 import shutil
+import stat
 import tarfile
 import time
 import types
@@ -19,8 +20,8 @@ from .consts import PROJECT_PATH
 if not hasattr(asyncio, "coroutine"):
     asyncio.coroutine = types.coroutine
 
-
 __all__ = ["download_google", "ensure_assets"]
+
 
 def _require_seqkit():
     if platform.system().lower() == "windows":
@@ -38,6 +39,7 @@ def _require_seqkit():
         "  - brew install brewsci/bio/seqkit  (macOS)\n"
         "  - see https://github.com/shenwei356/seqkit for releases"
     )
+
 
 def _require_samtools():
     """
@@ -85,15 +87,16 @@ def _require_samtools():
         tips.append("conda install -c bioconda samtools")
 
     msg = (
-        "ERROR: `samtools` not found on PATH.\n"
-        "Install it with one of the following commands:\n" +
-        "\n".join(f"  - {t}" for t in tips)
+            "ERROR: `samtools` not found on PATH.\n"
+            "Install it with one of the following commands:\n" +
+            "\n".join(f"  - {t}" for t in tips)
     )
     raise RuntimeError(msg)
 
 
 import platform
 import shutil
+
 
 def _require_bowtie():
     """
@@ -143,13 +146,13 @@ def _require_bowtie():
         tips.append("conda install -c bioconda bowtie")
 
     msg = (
-        "ERROR: `bowtie` not found on PATH.\n"
-        "Install it with one of the following commands:\n" +
-        "\n".join(f"  - {t}" for t in tips) +
-        "\n\nAlternatively, you can let the package fetch a prebuilt binary "
-        "programmatically on Linux/macOS:\n"
-        "  from asodesigner.utils.ensure_bowtie import ensure_bowtie\n"
-        "  ensure_bowtie(PROJECT_PATH)\n"
+            "ERROR: `bowtie` not found on PATH.\n"
+            "Install it with one of the following commands:\n" +
+            "\n".join(f"  - {t}" for t in tips) +
+            "\n\nAlternatively, you can let the package fetch a prebuilt binary "
+            "programmatically on Linux/macOS:\n"
+            "  from asodesigner.utils.ensure_bowtie import ensure_bowtie\n"
+            "  ensure_bowtie(PROJECT_PATH)\n"
     )
     raise RuntimeError(msg)
 
@@ -314,6 +317,7 @@ def ensure_bowtie(version: str = "1.3.1") -> str:
     os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ["PATH"]
     return str(bin_dir / "bowtie")
 
+
 def ensure_assets(force: bool = False):
     """
     Ensure required human assets exist at specified locations relative to this script.
@@ -346,6 +350,13 @@ def ensure_assets(force: bool = False):
     index_dir.mkdir(parents=True, exist_ok=True)
     project_dir.mkdir(parents=True, exist_ok=True)
 
+    rna_access_path_obj = Path(__file__).resolve().parent / "features" / "rna_access" / "3rd"
+    rna_access_path_file_obj = Path(
+        __file__).resolve().parent / "features" / "rna_access" / "3rd" / "run_raccess"
+
+    rna_access_path = str(Path(__file__).resolve().parent / "features" / "rna_access" / "3rd")
+    rna_access_path_file = str(
+        Path(__file__).resolve().parent / "features" / "rna_access" / "3rd" / "run_raccess")
     tasks = (
         {
             "name": "human_genome",
@@ -385,14 +396,21 @@ def ensure_assets(force: bool = False):
             "keep_archive": False,
             "result": str(project_dir / "chromosomes"),
         },
-
+        {
+            "name": "rna_access",
+            "url": "https://drive.google.com/file/d/1QoUcCFTTCBAas2s94-iX2yCGGiKR_z4j/view?usp=sharing",
+            "output": rna_access_path,
+            "extract": False,
+            "keep_archive": False,
+            "result": rna_access_path_file,
+        },
     )
 
     results = []
     for i, task in enumerate(tasks, 1):
         result_path = Path(task.get("result") or task["output"])
         print(f"[{i}/{len(tasks)}] Processing {task['name']}...")
-        
+
         if not force and result_path.exists():
             print(f"✓ {task['name']} already present at {result_path}")
             results.append(result_path)
@@ -409,6 +427,19 @@ def ensure_assets(force: bool = False):
             raise
         print()
 
+    src = next((p for p in rna_access_path_obj.iterdir()
+                if p.is_file() and (not p.name.startswith("stub"))), None)
+    if src is None:
+        raise FileNotFoundError(f"No file starting with 'run_raccess' in {rna_access_path_obj}")
+
+    dest = rna_access_path_file_obj  # final path, e.g., /path/to/dir/rna_access
+    shutil.move(str(src), str(dest))
+
+    # make the moved file executable: u+x,g+x,o+x
+    dest.chmod(dest.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    print(f"Moved {src} -> {dest} and set executable")
+
     print("=" * 50)
     print("✓ All assets downloaded successfully!")
     print("=" * 50)
@@ -422,7 +453,7 @@ def ensure_assets(force: bool = False):
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Download required human genome and annotation assets"
     )
@@ -439,9 +470,9 @@ if __name__ == "__main__":
         action="store_true",
         help="Force re-download even if files exist",
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         ensure_assets(destination=args.destination, force=args.force)
     except KeyboardInterrupt:
