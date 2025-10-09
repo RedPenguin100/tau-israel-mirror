@@ -35,7 +35,6 @@ usage() {
 # Parse arguments
 # ---------------------------
 while getopts "r:q:k:s:th" opt; do
-    echo "[DEBUG] Processing option: -$opt with arg ${OPTARG}"
     case $opt in
         r) REF="$OPTARG" ;;
         q) QUERY="$OPTARG" ;;
@@ -86,17 +85,9 @@ RES_DIR="/tmp/res/${SESSION_ID}/${FIND_OUTDIR}"
 
 
 if [[ $TEST_MODE -eq 1 ]]; then
-    echo "[DEBUG] TEST_MODE=1 → Running test branch"
     mkdir -p /tmp/test
-    echo "[DEBUG] mkdir -p /tmp/test"
-    echo "[DEBUG] Command: ./find_matches_in_bam.py -b \"$BAM_FILE\" -s - -mm \"$K\" -o /tmp/test"
     "$FIND_MATCHES" -b "$BAM_FILE" -s - -mm "$K" -o /tmp/test
 else
-    echo "[DEBUG] TEST_MODE=0 → Running main branch"
     mkdir -p "$RES_DIR"
-    echo "[DEBUG] mkdir -p \"$RES_DIR\""
-    echo "[DEBUG] Command: ./find_matches_in_bam.py -b \"$BAM_FILE\" -s - -mm \"$K\" -o \"$RES_DIR\" --single-json"
     "$FIND_MATCHES" -b "$BAM_FILE" -s - -mm "$K" -o "$RES_DIR" --single-json
 fi
-
-echo "[DEBUG] Pipeline completed successfully for session: $SESSION_ID"

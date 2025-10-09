@@ -26,10 +26,13 @@ pip install asodesigner
 The generator expects the human annotation database and Bowtie index structure to exist under `/tmp/.cache/asodesigner`. Download them once via:
 
 ```python
-from asodesigner.download_assets import ensure_assets
+from asodesigner.download_assets import ensure_assets, ensure_bowtie
 
 # Validates and downloads if necessary the needed files
-ensure_assets() 
+ensure_assets()
+
+# Validates and downloads bowtie if it is not in PATH
+ensure_bowtie()
 ```
 
 The helper skips files that already exist and only downloads missing assets.

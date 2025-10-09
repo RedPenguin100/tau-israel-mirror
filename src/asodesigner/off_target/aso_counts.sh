@@ -127,4 +127,4 @@ if [[ ! -f "$OUTPUT_FILE" ]]; then
 fi
 
 #echo "__INFO__: Pipeline completed successfully"
-#echo "__RETURN__: $(pwd)/$OUTPUT_FILE"
+echo "__RETURN__: $(pwd)/$OUTPUT_FILE"

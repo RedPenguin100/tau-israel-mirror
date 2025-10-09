@@ -77,6 +77,9 @@ def run_aso_counts(
         elif line.startswith("__ERROR_CMD__:"):
             error_msgs.append(f"  Command: {line.split(':', 1)[1].strip()}")
             print(f"[ERROR] {line}")
+        elif line.startswith("__RETURN__:"):
+            return_value = line.split(":", 1)[1].strip()
+            print(f"[RETURN] {line}")
         else:
             # Print other output for debugging
             if line.strip():
