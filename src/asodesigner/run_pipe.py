@@ -23,17 +23,12 @@ def seq_to_fasta(seq, path):
         f.write(seq + "\n")
 
 
-def get_n_best_res(genes_lst, n, mod_type, only_exons, tp=24, full_mRNA_fasta_file=None, gene_to_data=None):
+def get_n_best_res(genes_lst, n, mod_type, tp=24, full_mRNA_fasta_file=None, gene_to_data=None):
     assert (len(genes_lst) == 1)
     if gene_to_data is None:
         gene_to_data = dict()
     res = {}
-    if only_exons:
-        gene_to_data['one_exon'] = LocusInfoOld(genes_lst[0])
-        genes_lst = ['one_exon']
-    else:
-        if gene_to_data is None:
-            gene_to_data = create_gene_to_data(genes_lst)
+
     if full_mRNA_fasta_file:
         seq_to_fasta(gene_to_data[genes_lst[0]].full_mrna, full_mRNA_fasta_file)
     dfs = fill_dfs(genes_lst, gene_to_data, tp=tp, mod_type=mod_type)

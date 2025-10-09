@@ -75,21 +75,26 @@ def create_human_genome_db(path: Path, create_introns=False):
     return db
 
 
-def get_human_genome_annotation_db(create_db=False):
+def get_human_genome_annotation_db(create_db=False, verbose=False):
     db_path = HUMAN_DB_BASIC_INTRONS
 
-    if not db_path.is_file():
-        if HUMAN_DB_BASIC_INTRONS_GZ.is_file():
-            raise ValueError(
-                f"DB file is not unzipped: {HUMAN_DB_BASIC_INTRONS_GZ}, please unzip to use! (Consider README.md)")
+    with Timer() as t:
+        if not db_path.is_file():
+            if HUMAN_DB_BASIC_INTRONS_GZ.is_file():
+                raise ValueError(
+                    f"DB file is not unzipped: {HUMAN_DB_BASIC_INTRONS_GZ}, please unzip to use! (Consider README.md)")
 
-        if create_db:
-            db = create_human_genome_db(db_path, create_introns=True)
+            if create_db:
+                db = create_human_genome_db(db_path, create_introns=True)
+            else:
+                raise ValueError(
+                    f"DB not found in path: {str(db_path)}, either download it or create (please consider README.md)")
         else:
-            raise ValueError(
-                f"DB not found in path: {str(db_path)}, either download it or create (please consider README.md)")
-    else:
-        db = gffutils.FeatureDB(str(db_path))
+            db = gffutils.FeatureDB(str(db_path))
+    # TODO: use verbose
+    # if verbose:
+    print(f"Time took to read human annotations: {t.elapsed_time}")
+
     return db
 
 

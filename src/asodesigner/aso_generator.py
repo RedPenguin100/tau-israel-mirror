@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import string
 
+from .process_utils import LocusInfoOld
 from .utils import create_gene_to_data
 from .run_pipe import get_n_best_res
 from .consts_dataframe import *
@@ -82,9 +83,10 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
         geneData: Nucleotide sequence or identifier supplied by the client (optional)
         top_k: Number of top results to return
         includeFeatureBreakdown: Whether to include detailed feature breakdown
+        return_seq: Whether to return the mRNA sequence of the target
 
     Returns:
-        dict with 'asoSequence': list of {name, sequence}
+        dataframe with sequence, chemical modification, and optionally additional features ordered by predicted potency.
     """
     session_id = random.randint(1, 1_000_000)
     only_exons = True if geneData else False
@@ -98,17 +100,23 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
     else:
         full_mRNA_fasta_path = None
 
-    gene_to_data = create_gene_to_data(gene_lst)
+    if only_exons:
+        gene_to_data = dict()
+        gene_to_data['one_exon'] = LocusInfoOld(gene_lst[0])
+        gene_lst = ['one_exon']
+    else:
+        print("Creating gene to data: ")
+        gene_to_data = create_gene_to_data(gene_lst)
 
     # MOE_DF
-    moe_pre_df, full_mrna = get_n_best_res(gene_lst, top_k, 'moe', only_exons=only_exons,
+    moe_pre_df, full_mrna = get_n_best_res(gene_lst, top_k, 'moe',
                                            full_mRNA_fasta_file=full_mRNA_fasta_path
                                            , gene_to_data=gene_to_data
                                            )
     moe_df = moe_pre_df[gene_lst[0]].copy()
 
     # LNA_DF
-    lna_pre_df, _ = get_n_best_res(gene_lst, top_k, 'lna', only_exons=only_exons, gene_to_data=gene_to_data)
+    lna_pre_df, _ = get_n_best_res(gene_lst, top_k, 'lna', gene_to_data=gene_to_data)
     lna_df = lna_pre_df[gene_lst[0]].copy()
 
     # merge_df
