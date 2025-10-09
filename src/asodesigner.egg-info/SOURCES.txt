@@ -51,11 +51,3 @@ src/asodesigner/off_target/find_matches_in_bam.py
 src/asodesigner/populate/__init__.py
 src/asodesigner/populate/populate_cai.py
 src/asodesigner/populate/populate_sense_accessibility.py
-src/asodesigner/yehuda_code/Folding_Functions.py
-src/asodesigner/yehuda_code/__init__.py
-src/asodesigner/yehuda_code/access_calculator.py
-src/asodesigner/yehuda_code/file_util.py
-src/asodesigner/yehuda_code/mfe_target_accessability.py
-src/asodesigner/yehuda_code/off_target_folding_functions.py
-src/asodesigner/yehuda_code/rna_access.py
-src/asodesigner/yehuda_code/rna_trigger_selector.py

@@ -43,7 +43,9 @@ fi
 # ---------------------------
 REF_BASENAME="${REF##*/}"           # remove path
 REF_BASENAME="${REF_BASENAME%.*}"   # remove extension after the last dot
-INDEX_DIR="index_structure/$REF_BASENAME"
+
+# TODO: remove hard-coded path
+INDEX_DIR="/tmp/.cache/asodesigner/off_target/index_structure/$REF_BASENAME"
 
 # ---------------------------
 # Build Bowtie1 index

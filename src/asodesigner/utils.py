@@ -1,8 +1,6 @@
 # Check the wellness of fit
 from xgboost import XGBRanker
-from .consts import CACHE_DIR
 import pickle
-from scipy.stats import spearmanr, pearsonr
 from .util import get_antisense
 import pandas as pd
 from .read_human_genome import get_locus_to_data_dict

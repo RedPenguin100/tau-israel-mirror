@@ -7,6 +7,7 @@ __pycache__/
 *.egg
 build/
 dist/
+src/asodesigner.egg-info
 
 # large data
 client/app/data/
@@ -14,7 +15,8 @@ cache/
 src/cache/
 src/cache/genomes/hg38/
 cache/genomes/hg38/
-src/asodesigner/features/rna_access/output
+src/asodesigner/features/rna_access/output/trig_raccess.txt
+src/asodesigner/features/rna_access/output/trig_seq.fa
 data/human/transcripts/ACH-001328_transcriptome.csv
 src/data/human/human_v34/dbs/
 src/data/human/human_v34/gencode.v34.annotation.gff3*

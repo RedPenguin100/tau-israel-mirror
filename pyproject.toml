@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asodesigner"
-version = "1.0.1"
+version = "1.1.0"
 description = "Feature extraction and analysis toolkit for antisense oligonucleotide design."
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
@@ -30,7 +30,8 @@ dependencies = [
     "mega.py",
     "xgboost>=2.0",
     "scikit-learn>=1.5",
-    "gdown>=5.1.0"
+    "gdown>=5.1.0",
+    "pysam>=0.22.0,<0.23"
 ]
 
 classifiers = [

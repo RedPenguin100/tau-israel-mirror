@@ -1,6 +1,5 @@
-from numba.typed import Dict, List
+from numba.typed import Dict
 from numba import njit, types
-import numpy as np
 
 
 def get_longer_string(s1: str, s2: str) -> str:

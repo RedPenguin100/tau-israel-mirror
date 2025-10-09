@@ -5,6 +5,10 @@ METHOD="h"
 MAX_MISMATCHES=3
 OUTPUT_PREFIX="res"
 
+# Resolve this script's directory so relative helpers work from anywhere
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+BUILD_INDEX="${SCRIPT_DIR}/build_index.sh"
+
 # ---------------------------
 # Usage / Help
 # ---------------------------
@@ -16,13 +20,10 @@ This script performs alignment using Bowtie1 with Hamming distance and creates B
 Options:
   -r <ref.fa>        Reference FASTA file (required)
   -q <reads.fa>      Query FASTA file (required)
-  -s <session_id>    Session ID for separating web service sessions (required)
+  -s <session_id>    Session ID (required)
   -o <prefix>        Output prefix (default: res)
   -m <int>           Max mismatches (default: 3)
-  -h                 Show this help message and exit
-
-Example:
-  $0 -r ref.fa -q reads.fa -s session123 -o results -m 2
+  -h                 Show help and exit
 EOF
     exit 0
 }
@@ -60,33 +61,36 @@ REF_BASENAME="${REF_BASENAME%.*}"
 QUERY_BASENAME="${QUERY##*/}"
 QUERY_BASENAME="${QUERY_BASENAME%.*}"
 
-# Index stays in app directory (reusable across sessions)
-INDEX_DIR="index_structure/$REF_BASENAME"
+# TODO: don't hard-code
+INDEX_DIR="/tmp/.cache/asodesigner/off_target/index_structure/${REF_BASENAME}"
 
-# BAM files go to /tmp (session-specific, temporary)
+# BAM files go to /tmp (session-specific)
 BAM_DIR="/tmp/bam_files/${SESSION_ID}/${REF_BASENAME}_${QUERY_BASENAME}"
 
-echo "Session ID: $SESSION_ID"
-echo "BAM output directory: $BAM_DIR"
-
-# Create the BAM directory in /tmp
 mkdir -p "$BAM_DIR"
 
 # ---------------------------
-# Build index using build_index.sh
+# Ensure dependencies + index exist
 # ---------------------------
-echo "Ensuring index is built..."
-./build_index.sh -r "$REF" || { echo "Error: build_index.sh failed"; exit 1; }
+command -v bowtie >/dev/null 2>&1 || { echo "Error: bowtie (v1) not found in PATH"; exit 1; }
+command -v samtools >/dev/null 2>&1 || { echo "Warning: samtools not found; BAM indexing will be skipped"; }
+
+# build_index.sh via absolute path
+[ -f "$BUILD_INDEX" ] || { echo "Error: build_index.sh not found at $BUILD_INDEX"; exit 1; }
+[ -x "$BUILD_INDEX" ] || { echo "Error: build_index.sh not executable (chmod +x): $BUILD_INDEX"; exit 1; }
+
+"$BUILD_INDEX" -r "$REF" || { echo "Error: build_index.sh failed"; exit 1; }
+
+# Bowtie expects -x <index_base> (without extensions)
+INDEX_BASE="${INDEX_DIR}/${REF_BASENAME}_index"
 
 # ---------------------------
 # Alignment function
 # ---------------------------
 align_bowtie1() {
     SAM_FILE="$BAM_DIR/${QUERY_BASENAME}.sam"
-    echo "Running Bowtie1 alignment..."
-    bowtie -v "$MAX_MISMATCHES" -a --best -f -x "$INDEX_DIR/${REF_BASENAME}_index" -S "$QUERY" > "$SAM_FILE" \
+    bowtie -v "$MAX_MISMATCHES" -a --best -f -x "$INDEX_BASE" -S "$QUERY" > "$SAM_FILE" \
         || { echo "Error: Bowtie1 alignment failed"; exit 1; }
-    echo "SAM file saved: $SAM_FILE"
 }
 
 # ---------------------------
@@ -95,10 +99,8 @@ align_bowtie1() {
 sam_to_bam() {
     SAM_FILE="$BAM_DIR/${QUERY_BASENAME}.sam"
     BAM_FILE="$BAM_DIR/${QUERY_BASENAME}.sorted.bam"
-    echo "Converting SAM to sorted BAM..."
     samtools view -bS "$SAM_FILE" | samtools sort -o "$BAM_FILE" - \
         || { echo "Error: BAM conversion failed"; exit 1; }
-    echo "BAM file ready: $BAM_FILE"
 }
 
 # ---------------------------
@@ -107,9 +109,7 @@ sam_to_bam() {
 index_bam() {
     BAM_FILE="$BAM_DIR/${QUERY_BASENAME}.sorted.bam"
     if command -v samtools &>/dev/null; then
-        echo "Indexing BAM file..."
         samtools index "$BAM_FILE" || { echo "Error: BAM indexing failed"; exit 1; }
-        echo "BAM index ready: ${BAM_FILE}.bai"
     else
         echo "Warning: samtools not found. Skipping indexing."
     fi
@@ -130,5 +130,3 @@ fi
 
 sam_to_bam
 index_bam
-
-echo "Pipeline completed successfully for session: $SESSION_ID"
