@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Resolve this script's directory to call helpers reliably
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+CREATE_BAM="${SCRIPT_DIR}/create_bam.sh"
+FIND_MATCHES="${SCRIPT_DIR}/find_matches_in_bam.py"
+
+# Optional sanity checks (safe and brief)
+[[ -f "$CREATE_BAM" ]] || { echo "__ERROR__: create_bam.sh not found at $CREATE_BAM"; exit 1; }
+[[ -x "$CREATE_BAM" ]] || { echo "__ERROR__: create_bam.sh not executable (chmod +x) at $CREATE_BAM"; exit 1; }
+[[ -f "$FIND_MATCHES" ]] || { echo "__ERROR__: find_matches_in_bam.py not found at $FIND_MATCHES"; exit 1; }
+
 # ---------------------------
 # Default parameters
 # ---------------------------
@@ -25,6 +35,7 @@ usage() {
 # Parse arguments
 # ---------------------------
 while getopts "r:q:k:s:th" opt; do
+    echo "[DEBUG] Processing option: -$opt with arg ${OPTARG}"
     case $opt in
         r) REF="$OPTARG" ;;
         q) QUERY="$OPTARG" ;;
@@ -41,6 +52,7 @@ done
 # ---------------------------
 if [[ $TEST_MODE -eq 0 ]]; then
     if [[ -z "$REF" || -z "$QUERY" || -z "$K" || -z "$SESSION_ID" ]]; then
+        echo "[DEBUG] Missing arguments. REF=$REF, QUERY=$QUERY, K=$K, SESSION_ID=$SESSION_ID"
         echo "Error: Missing required arguments."
         usage
     fi
@@ -64,23 +76,27 @@ FIND_OUTDIR="${REF_BASENAME}_${QUERY_BASENAME}"
 BAM_DIR="/tmp/bam_files/${SESSION_ID}/${REF_BASENAME}_${QUERY_BASENAME}"
 BAM_FILE="${BAM_DIR}/${QUERY_BASENAME}.sorted.bam"
 
-echo "Session ID: $SESSION_ID"
-echo "BAM file: $BAM_FILE"
-
 # Output directory for find_matches_in_bam.py with session ID in /tmp
 RES_DIR="/tmp/res/${SESSION_ID}/${FIND_OUTDIR}"
 
 # ---------------------------
 # Run main commands
 # ---------------------------
-./create_bam.sh -r "$REF" -q "$QUERY" -s "$SESSION_ID" -o "$REF_BASENAME" -m "$K"
+"$CREATE_BAM" -r "$REF" -q "$QUERY" -s "$SESSION_ID" -o "$REF_BASENAME" -m "$K"
+
 
 if [[ $TEST_MODE -eq 1 ]]; then
+    echo "[DEBUG] TEST_MODE=1 → Running test branch"
     mkdir -p /tmp/test
-    ./find_matches_in_bam.py -b "$BAM_FILE" -s - -mm "$K" -o /tmp/test 
+    echo "[DEBUG] mkdir -p /tmp/test"
+    echo "[DEBUG] Command: ./find_matches_in_bam.py -b \"$BAM_FILE\" -s - -mm \"$K\" -o /tmp/test"
+    "$FIND_MATCHES" -b "$BAM_FILE" -s - -mm "$K" -o /tmp/test
 else
+    echo "[DEBUG] TEST_MODE=0 → Running main branch"
     mkdir -p "$RES_DIR"
-    ./find_matches_in_bam.py -b "$BAM_FILE" -s - -mm "$K" -o "$RES_DIR" --single-json
+    echo "[DEBUG] mkdir -p \"$RES_DIR\""
+    echo "[DEBUG] Command: ./find_matches_in_bam.py -b \"$BAM_FILE\" -s - -mm \"$K\" -o \"$RES_DIR\" --single-json"
+    "$FIND_MATCHES" -b "$BAM_FILE" -s - -mm "$K" -o "$RES_DIR" --single-json
 fi
 
-echo "Pipeline completed successfully for session: $SESSION_ID"
+echo "[DEBUG] Pipeline completed successfully for session: $SESSION_ID"

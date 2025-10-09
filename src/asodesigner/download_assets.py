@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
 import gzip
+import os
+import platform
+import shutil
 import tarfile
-import threading
 import time
 import types
+import urllib
 import zipfile
 from pathlib import Path
-from typing import Union
 import gdown
-
-import requests
-from prompt_toolkit import output
-from tqdm import tqdm
 
 from .consts import PROJECT_PATH
 
@@ -133,7 +131,59 @@ def download_google(task):
     return Path(result_path)
 
 
-def ensure_assets(destination: Union[str, Path, None] = None, force: bool = False):
+def ensure_bowtie(version: str = "1.3.1") -> str:
+    """Ensure Bowtie v1 is available; if missing, download to project_path/off_target.
+    Returns absolute path to the bowtie binary."""
+    # 1. Already installed?
+    existing = shutil.which("bowtie")
+    if existing:
+        return existing
+
+    # 2. Prepare install directory inside the project
+    off_target_dir = PROJECT_PATH.expanduser() / "off_target"
+    off_target_dir.mkdir(parents=True, exist_ok=True)
+    bowtie_dir = off_target_dir / f"bowtie-{version}"
+    bowtie_bin = bowtie_dir / "bowtie"
+
+    if bowtie_bin.exists():
+        os.environ["PATH"] = str(bowtie_dir) + os.pathsep + os.environ["PATH"]
+        return str(bowtie_bin)
+
+    # 3. Detect platform and get URL for precompiled binary
+    system = platform.system().lower()
+    if system.startswith("linux"):
+        filename = f"bowtie-{version}-linux-x86_64.zip"
+    elif system.startswith("darwin"):
+        filename = f"bowtie-{version}-macos-x86_64.zip"
+    else:
+        raise RuntimeError(f"Unsupported OS for Bowtie: {system}")
+
+    url = f"https://sourceforge.net/projects/bowtie-bio/files/bowtie/{version}/{filename}/download"
+
+    # 4. Download + extract into off_target/
+    print(f"[INFO] Bowtie not found — downloading {filename} to {bowtie_dir} ...")
+    bowtie_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = bowtie_dir / filename
+    urllib.request.urlretrieve(url, archive_path)
+    shutil.unpack_archive(archive_path, bowtie_dir)
+
+    # 5. Find the binary folder
+    for root, _, files in os.walk(bowtie_dir):
+        if "bowtie" in files:
+            bin_dir = Path(root)
+            break
+    else:
+        raise RuntimeError("Bowtie binary not found after extraction.")
+
+    # 6. Make binaries executable + add to PATH
+    for f in bin_dir.iterdir():
+        if f.is_file():
+            f.chmod(0o755)
+
+    os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ["PATH"]
+    return str(bin_dir / "bowtie")
+
+def ensure_assets(force: bool = False):
     """
     Ensure required human assets exist at specified locations relative to this script.
     
