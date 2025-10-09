@@ -51,3 +51,4 @@ src/asodesigner/off_target/find_matches_in_bam.py
 src/asodesigner/populate/__init__.py
 src/asodesigner/populate/populate_cai.py
 src/asodesigner/populate/populate_sense_accessibility.py
+src/asodesigner/populate/cai_cache/weights_cache.json

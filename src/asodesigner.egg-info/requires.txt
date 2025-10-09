@@ -16,4 +16,4 @@ mega.py
 xgboost>=2.0
 scikit-learn>=1.5
 gdown>=5.1.0
-pysam<0.23,>=0.22.0
+pysam

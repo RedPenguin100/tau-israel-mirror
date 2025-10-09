@@ -45,7 +45,8 @@ def get_n_best_res(genes_lst, n, mod_type, only_exons, tp=24, full_mRNA_fasta_fi
         top_n = df.nlargest(n, 'score')
         top_n['seq_name'] = [f"{mod_type}_{i}" for i in range(len(top_n))]
         res[gene] = top_n.copy()
-    return res
+
+    return (res , gene_to_data[genes_lst[0]].full_mrna )
 
 
 if __name__ == "__main__":
