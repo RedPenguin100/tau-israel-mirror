@@ -8,6 +8,6 @@ from importlib import metadata as _metadata
 try:  # pragma: no cover - best effort during local development
     __version__ = _metadata.version("asodesigner")
 except _metadata.PackageNotFoundError:  # pragma: no cover - package not installed
-    __version__ = "1.1.5"
+    __version__ = "1.1.6"
 
 __all__ = ["__version__"]
