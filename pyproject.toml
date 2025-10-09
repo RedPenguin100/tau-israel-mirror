@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asodesigner"
-version = "1.1.0"
+version = "1.1.1"
 description = "Feature extraction and analysis toolkit for antisense oligonucleotide design."
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
@@ -13,9 +13,9 @@ authors = [
 ]
 keywords = ["antisense", "oligonucleotide", "bioinformatics", "igem"]
 dependencies = [
-    "numpy",
-    "pandas",
-    "scipy",
+    "numpy>=1.26,<2.3",            # manylinux wheels exist (allows 2.2.x)
+    "pandas>=2.2,<2.3",            # avoids 2.3.x source build on your box
+    "scipy>=1.11,<1.12",           # wheels available for Py3.10
     "matplotlib",
     "numba",
     "biopython",
