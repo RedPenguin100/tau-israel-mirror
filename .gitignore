@@ -17,6 +17,8 @@ src/cache/genomes/hg38/
 cache/genomes/hg38/
 src/asodesigner/features/rna_access/output/trig_raccess.txt
 src/asodesigner/features/rna_access/output/trig_seq.fa
+src/asodesigner/features/rna_access/3rd/run_raccess
+
 data/human/transcripts/ACH-001328_transcriptome.csv
 src/data/human/human_v34/dbs/
 src/data/human/human_v34/gencode.v34.annotation.gff3*
