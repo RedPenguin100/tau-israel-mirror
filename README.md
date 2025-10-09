@@ -53,10 +53,10 @@ Generate top ASO candidates for a human gene, complete with feature annotations:
 ```python
 from asodesigner.aso_generator import design_asos
 
-# Retrieve the top 3 MOE + LNA designs for MALAT1
+# Retrieve the top 3 MOE + LNA designs for DDX11L1
 candidates = design_asos(
     organismName="human",
-    geneName="MALAT1",
+    geneName="DDX11L1",
     geneData=None,
     top_k=3,
     includeFeatureBreakdown=False,
