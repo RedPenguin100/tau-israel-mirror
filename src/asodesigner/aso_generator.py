@@ -101,14 +101,15 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
     gene_to_data = create_gene_to_data(gene_lst)
 
     # MOE_DF
-    moe_df = get_n_best_res(gene_lst, top_k, 'moe', only_exons=only_exons, full_mRNA_fasta_file=full_mRNA_fasta_path
-                            , gene_to_data=gene_to_data
-                            )[
-        gene_lst[0]].copy()
+    moe_pre_df, full_mrna = get_n_best_res(gene_lst, top_k, 'moe', only_exons=only_exons,
+                                           full_mRNA_fasta_file=full_mRNA_fasta_path
+                                           , gene_to_data=gene_to_data
+                                           )
+    moe_df = moe_pre_df[gene_lst[0]].copy()
 
     # LNA_DF
-    lna_df = get_n_best_res(gene_lst, top_k, 'lna', only_exons=only_exons, gene_to_data=gene_to_data)[
-        gene_lst[0]].copy()
+    lna_pre_df, _ = get_n_best_res(gene_lst, top_k, 'lna', only_exons=only_exons, gene_to_data=gene_to_data)
+    lna_df = lna_pre_df[gene_lst[0]].copy()
 
     # merge_df
     df = pd.concat([moe_df, lna_df], ignore_index=True)
@@ -123,7 +124,10 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
     else:
         df = df[[SEQUENCE, 'mod_pattern']].copy()
 
-    return df
+    if not return_seq:
+        return df
+    else:
+        return [df, full_mrna]
 
 
 if __name__ == "__main__":
