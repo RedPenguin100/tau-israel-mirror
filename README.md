@@ -16,7 +16,17 @@
 ## Installation
 
 ### From PyPI
+The library is only supported for Linux, and via conda.
 
+There are some dependencies:
+
+```bash
+conda install -c bioconda samtools==1.20
+conda install -c bioconda bowtie==1.3.1
+conda install -c bioconda seqkit
+```
+
+To install the library, run:
 ```bash
 pip install asodesigner
 ```
@@ -26,13 +36,10 @@ pip install asodesigner
 The generator expects the human annotation database and Bowtie index structure to exist under `/tmp/.cache/asodesigner`. Download them once via:
 
 ```python
-from asodesigner.download_assets import ensure_assets, ensure_bowtie
+from asodesigner.download_assets import ensure_assets
 
 # Validates and downloads if necessary the needed files
 ensure_assets()
-
-# Validates and downloads bowtie if it is not in PATH
-ensure_bowtie()
 ```
 
 The helper skips files that already exist and only downloads missing assets.
@@ -50,7 +57,7 @@ candidates = design_asos(
     geneName="MALAT1",
     geneData=None,
     top_k=3,
-    includeFeatureBreakdown=True,
+    includeFeatureBreakdown=False,
 )
 
 print(candidates[["Sequence", "mod_pattern"]])
@@ -65,8 +72,7 @@ print(candidates[["Sequence", "mod_pattern"]])
 
 1. Update or add functionality under `src/asodesigner/`.
 2. Keep imports relative within the package (for example, `from .util import helper`).
-3. Run `pytest` (or `python -m pytest`) to execute the available unit tests.
-4. Optionally run `python -m compileall src/asodesigner` to double-check importability before packaging.
+3. Optionally run `python -m compileall src/asodesigner` to double-check importability before packaging.
 
 ## Extending the Project
 

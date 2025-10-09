@@ -7,7 +7,7 @@ def compute_sense_accessibility_value(sense_start, sense_length, flank, flank_si
         # Skip invalid rows
         if sense_start == -1:
             print("Sense start bad!")
-            return None
+            return 0
 
         # Calculate accessibility
         df_access = AccessCalculator.calc(
@@ -27,8 +27,7 @@ def compute_sense_accessibility_value(sense_start, sense_length, flank, flank_si
             # print(f"sense_start_in_flank: {sense_start_in_flank}")
             # print(f"len(df_access): {len(df_access)}")
             # print(f"sense_end_in_flank: {sense_end_in_flank}")
-            return None
-
+            return 0
     except Exception as e:
         print(f"Error at {sense_start}, {sense_length} | error: {e}")
-        return None
+        return 0
