@@ -26,10 +26,10 @@ def seq_to_fasta(seq, path):
 def get_n_best_res(genes_lst, n, mod_type, only_exons, tp=24, full_mRNA_fasta_file=None):
     assert (len(genes_lst) == 1)
     res = {}
+    gene_to_data = dict()
     if only_exons:
-        gene_to_data = dict()
         gene_to_data['one_exon'] = LocusInfoOld(genes_lst[0])
-        gene_lst = ['one_exon']
+        genes_lst = ['one_exon']
     else:
         gene_to_data = create_gene_to_data(genes_lst)
     if full_mRNA_fasta_file:
