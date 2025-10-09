@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from asodesigner.consts import DATA_PATH
-from asodesigner.consts_dataframe import SEQUENCE, CANONICAL_GENE
-from asodesigner.features.cai import calc_CAI, calc_CAI_weight
-from asodesigner.util import _to_str_seq, get_antisense, _norm_rna_to_dna
+from ..consts import DATA_PATH
+from ..consts_dataframe import SEQUENCE, CANONICAL_GENE
+from ..features.cai import calc_CAI
+from ..util import _to_str_seq, get_antisense, _norm_rna_to_dna
 
 
 PARDIR = Path(__file__).parent

@@ -5,9 +5,8 @@ from dataclasses import dataclass
 from fuzzysearch import find_near_matches
 from tqdm import tqdm
 
-from asodesigner.consts import EXPERIMENT_RESULTS
-from asodesigner.timer import Timer
-from asodesigner.util import get_antisense
+from .timer import Timer
+from .util import get_antisense
 
 
 class LocusInfoOld:

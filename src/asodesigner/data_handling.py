@@ -26,10 +26,9 @@ def get_unique_human_genes(all_data):
 
 
 def get_gene_to_data(genes_u):
-    from asodesigner.read_human_genome import get_locus_to_data_dict
+    from .read_human_genome import get_locus_to_data_dict
     import pickle
-    from asodesigner.consts import CACHE_DIR
-    import copy
+    from .consts import CACHE_DIR
 
     cache_path = CACHE_DIR / 'gene_to_data_simple_cache.pickle'
 
@@ -49,7 +48,7 @@ def get_populated_df_with_structure_features(df, genes_u, gene_to_data):
     """
     Populate "the data" df with features like exon/intron, start of the sense strand, if found.
     """
-    from asodesigner.util import get_antisense
+    from .util import get_antisense
     df_copy = df.copy()
     all_data_human = df_copy[df_copy[CELL_LINE_ORGANISM] == 'human']
     all_data_human_no_nan = all_data_human.dropna(subset=[INHIBITION]).copy()
