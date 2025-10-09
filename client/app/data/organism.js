@@ -10,18 +10,20 @@ export default [
     id: "yeast",
     label: "Yeast - Saccharomyces cerevisiae S288C",
     file_name:
-      "./cerevisiae_genome/GCF_000146045.2_R64_genomic.fna",
+       "./cerevisiae_genome/Saccharomyces_cerevisiae_S288C.fna",
   },
   {
     id: "mouse",
     label: "Mouse - Mus musculus GRCm39",
     file_name:
-      "./mouse_genome/GCF_000001635.27_GRCm39_genomic.fa",
+       "./mouse_genome/GRCm39.genome.fa",
   },
   {
     id: "E_coli",
     label: "Escherichia Coli",
     file_name:
-      "./Ecoli_genome/Escherichia_coli.fna",
+     "./Ecoli_genome/Escherichia_coli.fna",
   },
 ];
+
+
