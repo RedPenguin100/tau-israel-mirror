@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asodesigner"
-version = "1.1.7"
+version = "1.1.8"
 description = "Feature extraction and analysis toolkit for antisense oligonucleotide design."
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
