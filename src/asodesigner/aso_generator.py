@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import string
 
+from .utils import create_gene_to_data
 from .run_pipe import get_n_best_res
 from .consts_dataframe import *
 from .hybridization.hybridization_features import get_exp_psrna_hybridization
@@ -19,11 +20,13 @@ features_for_output = [SEQUENCE,
                        'sense_avg_accessibility'
                        ]
 
+
 def add_features_for_output(df):
     df.loc[:, 'exp_ps_hybr'] = [
         get_exp_psrna_hybridization(antisense.replace('T', 'U'), temp=37) for
         antisense in df[SEQUENCE]]
     df.loc[:, 'gc_content'] = df['sense'].apply(lambda seq: (seq.count('G') + seq.count('C')) / len(seq))
+
 
 def df_to_fasta(df):
     os.makedirs("/tmp", exist_ok=True)
@@ -69,7 +72,7 @@ def add_off_target(df, full_mRNA_fasta_file):
     add_target_scores(df, all_target_json, on_target_json)
 
 
-def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown):
+def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown, return_seq=False):
     """
     Main ASO generation function.
 
@@ -94,12 +97,18 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
             full_mRNA_fasta_path = f'/tmp/{session_id}/{geneName}.fa'  # empty will be created
     else:
         full_mRNA_fasta_path = None
+
+    gene_to_data = create_gene_to_data(gene_lst)
+
     # MOE_DF
-    moe_df = get_n_best_res(gene_lst, top_k, 'moe', only_exons=only_exons, full_mRNA_fasta_file=full_mRNA_fasta_path)[
+    moe_df = get_n_best_res(gene_lst, top_k, 'moe', only_exons=only_exons, full_mRNA_fasta_file=full_mRNA_fasta_path
+                            , gene_to_data=gene_to_data
+                            )[
         gene_lst[0]].copy()
 
     # LNA_DF
-    lna_df = get_n_best_res(gene_lst, top_k, 'lna', only_exons=only_exons)[gene_lst[0]].copy()
+    lna_df = get_n_best_res(gene_lst, top_k, 'lna', only_exons=only_exons, gene_to_data=gene_to_data)[
+        gene_lst[0]].copy()
 
     # merge_df
     df = pd.concat([moe_df, lna_df], ignore_index=True)

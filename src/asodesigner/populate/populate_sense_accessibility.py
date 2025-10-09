@@ -1,10 +1,11 @@
-from asodesigner.consts_dataframe import SENSE_START
-from asodesigner.features.feature_names import SENSE_LENGTH
-from asodesigner.features.rna_access.access_calculator import get_cache
-from asodesigner.features.rna_access.sense_accessibility import compute_sense_accessibility_value
-from asodesigner.features.vienna_fold import get_sense_with_flanks
+from ..consts_dataframe import SENSE_START
+from ..features.feature_names import SENSE_LENGTH
+from ..features.rna_access.access_calculator import get_cache
+from ..features.rna_access.sense_accessibility import compute_sense_accessibility_value
+from ..features.vienna_fold import get_sense_with_flanks
 
 SENSE_AVG_ACCESSIBILITY = 'sense_avg_accessibility'
+
 
 def populate_sense_accessibility(aso_dataframe, locus_info):
     FLANK_SIZE = 120

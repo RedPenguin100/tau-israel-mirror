@@ -12,8 +12,8 @@ from tqdm import tqdm
 if __package__ in (None, ""):
     PACKAGE_ROOT = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(PACKAGE_ROOT))
-    from asodesigner.read_human_genome import get_locus_to_data_dict
-    from asodesigner.consts import HUMAN_GTF, HUMAN_GTF_GZ, HUMAN_DB_BASIC_INTRONS
+    from .read_human_genome import get_locus_to_data_dict
+    from .consts import HUMAN_GTF, HUMAN_GTF_GZ, HUMAN_DB_BASIC_INTRONS
 else:  # pragma: no cover - exercised when imported as part of the package
     from .read_human_genome import get_locus_to_data_dict
     from .consts import HUMAN_GTF, HUMAN_GTF_GZ, HUMAN_DB_BASIC_INTRONS

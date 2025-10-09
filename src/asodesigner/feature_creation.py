@@ -53,8 +53,8 @@ def fill_df(df, gene, genes_lst, gene_to_data, SEQUENCES, tp=24, vol=1000, mod_t
     df.loc[:, 'Modification_min_distance_to_3prime'] = compute_mod_min_distance_to_3prime(
         mod_pattern)  ## gen more mod_patterns
 
-    df.loc[:, 'sense_avg_accessibility'] = 0.8526221963673779 # TODO - replace with the calculation
-    # populate_sense_accessibility(df, gene_to_data[gene])
+    # df.loc[:, 'sense_avg_accessibility'] = 0.8526221963673779 # TODO - replace with the calculation
+    populate_sense_accessibility(df, gene_to_data[gene])
     populate_cai_for_aso_dataframe(df, gene_to_data[gene])
     # df.loc[:, SENSE_AVG_ACCESSIBILITY] = 0.8526221963673779 # TODO - replace with the calculation
     # df.loc[:, 'CAI_score_global_CDS'] = 0.8526221963673779 # TODO - replace with the calculation
