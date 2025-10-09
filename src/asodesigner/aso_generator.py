@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import string
 
+from .download_assets import _require_samtools, _require_bowtie, _require_seqkit
 from .process_utils import LocusInfoOld
 from .utils import create_gene_to_data
 from .run_pipe import get_n_best_res
@@ -88,6 +89,10 @@ def design_asos(organismName, geneName, geneData, top_k, includeFeatureBreakdown
     Returns:
         dataframe with sequence, chemical modification, and optionally additional features ordered by predicted potency.
     """
+    _require_seqkit()
+    _require_samtools()
+    _require_bowtie()
+
     session_id = random.randint(1, 1_000_000)
     only_exons = True if geneData else False
     gene_lst = [geneData] if geneData else [geneName]

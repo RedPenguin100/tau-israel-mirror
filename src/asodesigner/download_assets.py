@@ -22,6 +22,137 @@ if not hasattr(asyncio, "coroutine"):
 
 __all__ = ["download_google", "ensure_assets"]
 
+def _require_seqkit():
+    if platform.system().lower() == "windows":
+        raise RuntimeError(
+            "ERROR: `seqkit` is not supported via pip on Windows. "
+            "Use WSL/conda or install the binary manually."
+        )
+    path = shutil.which("seqkit")
+    if path:
+        return path
+    raise RuntimeError(
+        "ERROR: `seqkit` not found on PATH.\n"
+        "Install it with one of:\n"
+        "  - conda install -c bioconda seqkit\n"
+        "  - brew install brewsci/bio/seqkit  (macOS)\n"
+        "  - see https://github.com/shenwei356/seqkit for releases"
+    )
+
+def _require_samtools():
+    """
+    Return absolute path to `samtools` if found on PATH.
+    On Windows: always error out (unsupported).
+    On Linux/macOS: if missing, raise with install tips.
+    """
+    tool_name = "samtools"
+    # Hard stop on Windows (native)
+    if platform.system().lower() == "windows":
+        raise RuntimeError(
+            "ERROR: `samtools` is not supported on native Windows. "
+            "Run your pipeline in WSL (Ubuntu) or on Linux/macOS."
+        )
+
+    path = shutil.which(tool_name)
+    if path:
+        return path
+
+    tips = []
+    # Prefer conda/mamba if present
+    if shutil.which("mamba"):
+        tips.append("mamba install -c bioconda samtools")
+    if shutil.which("conda"):
+        tips.append("conda install -c bioconda samtools")
+
+    sys = platform.system().lower()
+    if sys == "linux":
+        if shutil.which("apt-get"):
+            tips.append("sudo apt-get update && sudo apt-get install -y samtools")
+        if shutil.which("dnf"):
+            tips.append("sudo dnf install -y samtools")
+        if shutil.which("yum"):
+            tips.append("sudo yum install -y epel-release && sudo yum install -y samtools")
+        if shutil.which("zypper"):
+            tips.append("sudo zypper install -y samtools")
+        tips.append("(or use conda/mamba from https://conda.io)")
+    elif sys == "darwin":
+        if shutil.which("brew"):
+            tips.append("brew install samtools")
+        else:
+            tips.append("conda install -c bioconda samtools  # Homebrew not found")
+    else:
+        # Unknown UNIX—fall back to conda suggestion
+        tips.append("conda install -c bioconda samtools")
+
+    msg = (
+        "ERROR: `samtools` not found on PATH.\n"
+        "Install it with one of the following commands:\n" +
+        "\n".join(f"  - {t}" for t in tips)
+    )
+    raise RuntimeError(msg)
+
+
+import platform
+import shutil
+
+def _require_bowtie():
+    """
+    Return absolute path to `bowtie` if found on PATH.
+
+    On Windows: always error out (unsupported natively).
+    On Linux/macOS: if missing, raise with install tips and a note that
+    you can also call your programmatic downloader: ensure_bowtie(PROJECT_PATH).
+    """
+    tool_name = "bowtie"
+    # Hard stop on native Windows
+    if platform.system().lower() == "windows":
+        raise RuntimeError(
+            "ERROR: `bowtie` is not supported on native Windows. "
+            "Run the pipeline in WSL (Ubuntu) or on Linux/macOS."
+        )
+
+    # Found on PATH?
+    path = shutil.which(tool_name)
+    if path:
+        return path
+
+    tips = []
+    # Prefer conda/mamba if present
+    if shutil.which("mamba"):
+        tips.append("mamba install -c bioconda bowtie")
+    if shutil.which("conda"):
+        tips.append("conda install -c bioconda bowtie")
+
+    sys = platform.system().lower()
+    if sys == "linux":
+        if shutil.which("apt-get"):
+            tips.append("sudo apt-get update && sudo apt-get install -y bowtie")
+        if shutil.which("dnf"):
+            tips.append("sudo dnf install -y bowtie")
+        if shutil.which("yum"):
+            tips.append("sudo yum install -y epel-release && sudo yum install -y bowtie")
+        if shutil.which("zypper"):
+            tips.append("sudo zypper install -y bowtie")
+        tips.append("(or use conda/mamba from https://conda.io)")
+    elif sys == "darwin":
+        if shutil.which("brew"):
+            tips.append("brew install bowtie")
+        else:
+            tips.append("conda install -c bioconda bowtie  # Homebrew not found")
+    else:
+        tips.append("conda install -c bioconda bowtie")
+
+    msg = (
+        "ERROR: `bowtie` not found on PATH.\n"
+        "Install it with one of the following commands:\n" +
+        "\n".join(f"  - {t}" for t in tips) +
+        "\n\nAlternatively, you can let the package fetch a prebuilt binary "
+        "programmatically on Linux/macOS:\n"
+        "  from asodesigner.utils.ensure_bowtie import ensure_bowtie\n"
+        "  ensure_bowtie(PROJECT_PATH)\n"
+    )
+    raise RuntimeError(msg)
+
 
 def download_google(task):
     """

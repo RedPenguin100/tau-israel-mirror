@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asodesigner"
-version = "1.1.2"
+version = "1.1.3"
 description = "Feature extraction and analysis toolkit for antisense oligonucleotide design."
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
@@ -55,7 +55,18 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["asodesigner", "asodesigner.*"]
+exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-asodesigner = ["model.json"]
+asodesigner = [
+  "model.json",
+  "features/rna_access/output/stub",  # ← stub is a file
+]
+
 "asodesigner.populate.cai_cache" = ["weights_cache.json"]
+
+[tool.setuptools.exclude-package-data]
+asodesigner = [
+  "off_target/index_structure/**",
+  "**/__pycache__/**",
+]
