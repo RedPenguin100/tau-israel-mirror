@@ -24,9 +24,9 @@ def compute_sense_accessibility_value(sense_start, sense_length, flank, flank_si
             values = df_access['avg_access'].iloc[sense_start_in_flank:sense_end_in_flank].dropna()
             return values.mean() if not values.empty else None
         else:
-            print(f"sense_start_in_flank: {sense_start_in_flank}")
-            print(f"len(df_access): {len(df_access)}")
-            print(f"sense_end_in_flank: {sense_end_in_flank}")
+            # print(f"sense_start_in_flank: {sense_start_in_flank}")
+            # print(f"len(df_access): {len(df_access)}")
+            # print(f"sense_end_in_flank: {sense_end_in_flank}")
             return None
 
     except Exception as e:
